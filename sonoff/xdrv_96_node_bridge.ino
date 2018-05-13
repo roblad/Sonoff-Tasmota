@@ -327,7 +327,7 @@ void NodeConvert(char *data)
  //delay(1);
  //memset(&print_buff[0], 0, sizeof(print_buff));
  //delay(0);
- print_buff[0]= '\0';
+ //print_buff[0]= '\0';
 
 }
 
@@ -358,14 +358,14 @@ if (json) {
            //  {"idx":IDX_FLAG,"nvalue":688,"Battery":200,"RSSI":10}
            MqttClient.publish(domoticz_in_topic, data,0);
            //delay(0);
-           data[0]='\0';
+           //data[0]='\0';
          }
 #endif
 
   }
 #endif  // USE_DOMOTICZ
         //memset(&node_bridge_buffer[0], 0, sizeof(node_bridge_buffer));
-        delay(0);
+        //delay(0);
         node_bridge_buffer[0]= '\0';
      }
 #ifdef USE_WEBSERVER
