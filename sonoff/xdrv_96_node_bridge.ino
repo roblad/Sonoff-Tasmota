@@ -171,7 +171,7 @@ void NodeBridgeInput()
 
   }
 
-  if (node_bridge_in_byte_counter && (millis() > (node_bridge_polling_window + 80))) {
+  if (node_bridge_in_byte_counter && (millis() > (node_bridge_polling_window + SERIAL_POLLING))) {
     node_bridge_buffer[node_bridge_in_byte_counter] = 0;  // serial data completed
     //mqtt_data[0] = '\0';
 #ifdef USE_WEBSERVER
@@ -184,7 +184,7 @@ void NodeBridgeInput()
     //delay(0);
 #endif
     //MqttShowSensor();
-    MqttPublishPrefixTopic_P(TELE, PSTR("NODE"), Settings.flag.mqtt_sensor_retain);
+    //MqttPublishPrefixTopic_P(TELE, PSTR("NODE"), Settings.flag.mqtt_sensor_retain);
     //delay(1);
     //if (MqttShowSensor()) { MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain); }
     //MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
