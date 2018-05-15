@@ -31,7 +31,7 @@
 #define NODE2
 #include <TasmotaSerial.h>
 
-
+char print_buff[190];
 enum NodeBridgeCommands { CMND_SSERIALSEND, CMND_SBAUDRATE };
 const char kNodeBridgeCommands[] PROGMEM = D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
 
@@ -252,9 +252,9 @@ else serviced = false;  // Unknown command
 
 void NodeConvert(char *data)
 {
-  char print_buff[200];
+
   UpperCase(&print_buff[0],data);
-  StaticJsonBuffer<300> jsonBuffer;
+  StaticJsonBuffer<240> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(print_buff);
   //yield();
   delay(0);
@@ -323,7 +323,7 @@ void NodeConvert(char *data)
 
  }
 
- //jsonBuffer.clear();
+ jsonBuffer.clear();
  //delay(1);
  //memset(&print_buff[0], 0, sizeof(print_buff));
  //delay(0);

@@ -46,23 +46,12 @@ void SwitchStateShow(boolean json)
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
          boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-        //      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SWITCH_STATE, //mqtt_data,i +1, GetStateText(swm ^ lastwallswitch[i]));
           char topic[25];
           snprintf_P(topic,sizeof(topic),PSTR("stat/%s/SWITCH%d"),Settings.switch_topic,i+1);
           char *test=GetStateText(swm ^ lastwallswitch[i]);
           MqttClient.publish(topic,test,true);
         }
     }
-    //MqttPublishPrefixTopic_P(TELE, PSTR("%s"),GetStateText(swm ^ lastwallswitch[i]), Settings.flag.mqtt_sensor_retain);
-    //    for (byte i = 0; i < MAX_SWITCHES; i++) {
-    //      if (pin[GPIO_SWT1 +i] < 99) {
-      //      boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || //(PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV //== Settings.switchmode[i]));
-      //      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SWITCH_STATE, //mqtt_data,i +1, GetStateText(swm ^ lastwallswitch[i]));
-
-      //     }
-
-            //MqttPublishPrefixTopic_P(CMND,"", Settings.flag.mqtt_sensor_retain);
-      // }
 
 
 #ifdef USE_WEBSERVER
@@ -91,9 +80,7 @@ boolean Xsns95(byte function)
   boolean result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      //hz43wb_CounterInit();
-      break;
+
     case FUNC_JSON_APPEND:
       SwitchStateShow(1);
       break;
