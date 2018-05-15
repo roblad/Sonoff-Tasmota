@@ -312,7 +312,7 @@ void NodeConvert(char *data)
      dtostrf(root[NODE_NAME]["PVOLT"],6,2,&voltage[0]);
      dtostrf(root[NODE_NAME]["POW"],9,2,&spower[0]);
      //dtostrf(root[NODE_NAME]["PAPP"],9,2,&sapppower[0]);
-     dtostrf(root[NODE_NAME]["PPMINUTE"],7,4,&energypmin[0]);
+     dtostrf(root[NODE_NAME]["PPMINUTE"],7,5,&energypmin[0]);
      tank=strdup(root[NODE_NAME]["TANK"]);
 
    break;
