@@ -780,6 +780,10 @@ void WifiCheck(uint8_t param)
     break;
   default:
     if (wifi_config_counter) {
+      wifi_config_counter--;
+
+
+
     //STB mod
       if (wifi_config_counter < 255) {
         wifi_config_counter--;

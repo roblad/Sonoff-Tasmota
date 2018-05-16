@@ -95,7 +95,12 @@ enum UserSelectablePins {
   GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
-  //STB mod
+  GPIO_SDM630_TX,      // SDM630 Serial interface
+  GPIO_SDM630_RX,      // SDM630 Serial interface
+
+
+
+//STB mod
   GPIO_SEN_SLEEP,
   //end
   GPIO_SENSOR_END };
