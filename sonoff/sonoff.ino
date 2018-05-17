@@ -101,6 +101,10 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER;
 
 // Global variables
+unsigned long feature_drv1;                 // Compiled driver feature map
+unsigned long feature_drv2;                 // Compiled driver feature map
+unsigned long feature_sns1;                 // Compiled sensor feature map
+unsigned long feature_sns2;                 // Compiled sensor feature map
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 byte serial_in_byte;                        // Received byte
@@ -192,7 +196,6 @@ byte max_pcf8574_devices = 0;         // Max numbers of PCF8574 modules
 //end
 
 boolean mdns_begun = false;
-unsigned long features = 0UL;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 
 char my_version[33];                        // Composed version string
@@ -2507,6 +2510,8 @@ void setup()
   //end
 
   OsWatchInit();
+
+  GetFeatures();
 
   baudrate = Settings.baudrate * 1200;
   seriallog_level = Settings.seriallog_level;

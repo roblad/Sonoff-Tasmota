@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1045
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "pl"
 
@@ -438,12 +439,12 @@
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
 #define D_SENSOR_IRSEND   "IRsend"
-#define D_SENSOR_SWITCH   "Przela"   // Suffix "1"
-#define D_SENSOR_BUTTON   "Przyci"   // Suffix "1"
-#define D_SENSOR_RELAY    "Przek"    // Suffix "1i"
+#define D_SENSOR_SWITCH   "Przełącznik"   // Suffix "1"
+#define D_SENSOR_BUTTON   "Przycisk"   // Suffix "1"
+#define D_SENSOR_RELAY    "Przekaźnik"    // Suffix "1i"
 #define D_SENSOR_LED      "Led"      // Suffix "1i"
 #define D_SENSOR_PWM      "PWM"      // Suffix "1"
-#define D_SENSOR_COUNTER  "Liczni"  // Suffix "1"
+#define D_SENSOR_COUNTER  "Licznik"  // Suffix "1"
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
