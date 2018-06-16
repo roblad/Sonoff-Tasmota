@@ -26,7 +26,7 @@
  F = [8.1Q-5] ±10%,F dla wartość chwilowa impulsu (HZ), Q dla przemijające przepływu (L/min) 4100 pulses for 10L
  *https://pl.aliexpress.com/item/Free-Shipping-Copper-G3-4-Water-Flow-Hall-Sensor-Switch-Flow-Meter-Flowmeter-Counter-2-45L/32223530631.html?spm=a2g17.search0104.3.2.231673f9tGvynE&ws_ab_test=searchweb0_0,searchweb201602_1_10152_10151_10065_10068_10344_10342_10343_10340_10341_10698_10696_10084_10083_10618_10304_10307_10301_10059_308_100031_10103_10624_10623_10622_10621_10620,searchweb201603_2,ppcSwitch_5&algo_expid=67cdaaff-761b-4abc-a822-6508e3fddd68-0&algo_pvid=67cdaaff-761b-4abc-a822-6508e3fddd68&priceBeautifyAB=0
 \*********************************************************************************************/
-// stb
+//stb
 #ifdef SWITCH_STATE_SHOW
 
 #ifdef USE_WEBSERVER

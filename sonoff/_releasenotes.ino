@@ -1,11 +1,53 @@
-/* 5.14.0a
- * Add Eastron SDM630 energy meter (#2735)
- * Add KNX communication enhancement (#2742)
- * Add KNX energy data (#2750)
- * Add compiled feature information to Status 4
+/* 6.0.0a
+ * Add CRC to Settings making future upgrades more fail-safe
+ * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
+ * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
+ * Fix Pzem004T checksum error
+ *
+ * 5.14.0b
+ * Add Console Commands to send KNX Commands
+   usage: KnxTx_Cmnd[slot] command
+   where [slot] is any of the 5 slots on the KNX Menu and command is 0 or 1
+   example: KnxTx_Cmnd1 0
+ * Add Console Commands to send KNX Values
+   usage: KnxTx_Val[slot] value
+   where [slot] is any of the 5 slots on the KNX Menu and value is a number
+   example: KnxTx_Val1 35
+ * Add Slots on the KNX Web Menu to select Group Addess to send data from console commands
+ * Add Events to trigger rules when received data from KNX
+   usage on rules as: event#KnxRx_Val[slot]
+   where [slot] is any of the 5 slots on the KNX Menu
+   example: rule on event#KnxRx_Val1 do VAR1 %value% endon
+ * Add Events to trigger rules when received read requests from KNX
+   usage on rules as: event#KnxRx_Req[slot]
+   where [slot] is any of the 5 slots on the KNX Menu
+   example: rule on event#KnxRx_Req1 do KnxTx_Val1 35 endon
+ * Add Slots on the KNX Web Menu to select Group Addess to receive data to trigger rules
+ * Add two rule sets of 511 characters using commands rule1, rule2 and rule3
+ * Add Ukranian language file
+ * Add rule support for IrReceive and RfReceive (#2758)
+ * Add command WebSend [<host>(:<port>,<user>:<password>)] <command> (#2821)
+ * Add source information to command execution to be shown with logging option 3 (#2843)
+ * Fix some Pow R2 and S31 checksum errors (#1907)
+ * Fix Hardware Watchdog restart when using event command (#2853)
+ *
+ * 5.14.0a
+ * Add feature information to Status 4
+ * Add tools folder with python script decode-status.py for decoding some status fields like SetOption and Features
+ * Add Eastron SDM630 energy meter by Gennaro Tortone (#2735)
+ * Add KNX communication enhancement by Adrian Scillato (#2742)
+ * Add KNX energy data by Adrian Scillato (#2750)
+ * Add python script fw-server.py in tools folder to create a simple OTA server by Gennaro Tortone (#2759)
+ * Add rules %mem1% to %mem5% variable names storing data in flash (#2780)
+ * Add rules test on %varx% or %memx% (#2780)
+ * Add optional token %id% substituting the unique MAC address to fulltopic by Michael Graf (#2794)
  * Fix display selection of un-available GPIO options in Module Configuration webpage (#2718)
  * Fix timer re-trigger within one minute after restart (#2744)
- * Fix IRSend not accepting data value of 0 (#2751)
+ * Fix IRSend not accepting data value of 0 by David Conran (#2751)
+ * Fix vars on rules by Adrian Scillato (#2769)
+ * Fix bug in KNX menu by Adrian Scillato (#2770)
+ * Fix anomalies in rules (#2778)
+ * Fix HUE bridge V1 software version by Heiko Krupp (#2788)
  *
  * 5.14.0 20180515
  * Update language files
@@ -20,13 +62,13 @@
  * Fix KNX config error (#2628)
  * Fix sensor MHZ-19 vanishing data over time (#2659)
  * Fix KNX reconnection issue (#2679)
- * Fix DST and STD time for Southern Hemisphere (#2684, #2714)
+ * Fix DST and STD time for Southern Hemisphere by Adrian Scillato (#2684, #2714)
  * Add Portuguese in Brazil language file
  * Add SetOption26 to enforce use of indexes even when only one relay is present (#1055)
  * Add support for sensor SI1145 UV Index / IR / Visible light (#2496)
  * Add rule state test for On/Off in addition to 0/1 (#2613)
  * Add hardware serial option to MHZ-19 sensor (#2659)
- * Add Eastron SDM120 energy meter (#2694)
+ * Add Eastron SDM120 energy meter by Gennaro Tortone (#2694)
  * Add user entry DST/STD using commands TimeStd and TimeDst (See wiki for parameter syntax) (#2721)
  *
  * 5.13.1 20180501

@@ -79,7 +79,7 @@ void CounterInit()
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
-// STB mode
+//STB mode
       //avoid DIV 0 on unitiialized
       if (Settings.pulse_devider[i] == 0 || Settings.pulse_devider[i] == 65535 ) {
         Settings.pulse_devider[i] = COUNTERDEVIDER;
