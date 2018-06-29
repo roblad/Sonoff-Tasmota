@@ -122,12 +122,13 @@ void chirp_Get() {
    dtostrfd((map(I2cRead16(chirpaddr, TWI_GET_CAPACITANCE),CHIRP_CAPACITANCE_MIN,CHIRP_CAPACITANCE_MAX,0,1000)/10.0), Settings.flag2.humidity_resolution, moisture);
    //delay(100);
  if (!I2cRead8(chirpaddr, TWI_GET_BUSY)) {
-   //delay(100);
+
    light = chirp_readLux();
 
   } else {
   // Report old value. Do not wait for new value.
-
+  yield();
+  delay(2000);
   uint16_t get = I2cRead16(chirpaddr, TWI_GET_LIGHT);
   light = (map(((get) > 58000  ? CHIRP_LIGHT_CALIB : get),CHIRP_LIGHT_CALIB,0,0,100));
   }
@@ -160,9 +161,12 @@ void chirp_Show(boolean json)
 
   #ifdef USE_WEBSERVER
      } else {
+
+
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, chirpstype, light);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, chirpstype, moisture);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
+
   #endif // USE_WEBSERVER
      }
   }
@@ -182,13 +186,15 @@ boolean Xsns92(byte function)
   if (i2c_flg) {
     switch (function) {
       case FUNC_INIT:
+        //Wire.setClockStretchLimit(2500);
         chirp_detect();
         break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
         chirp_detect();
+        chirp_Get();
         break;
       case FUNC_JSON_APPEND:
-        chirp_Get();
+
         chirp_Show(1);
 
         break;

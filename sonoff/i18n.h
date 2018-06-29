@@ -154,9 +154,10 @@
 //stb mode
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"
+#define D_CMND_DEEPSLEEP "DeepSleep"
+#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
 // end
 
-// Commands sonoff.ino
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_STATUS "Status"
@@ -199,7 +200,6 @@
 #define D_CMND_COUNTERTYPE "CounterType"
 #define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
 #define D_CMND_SLEEP "Sleep"
-#define D_CMND_DEEPSLEEP "DeepSleep"
 #define D_CMND_UPLOAD "Upload"
 #define D_CMND_UPGRADE "Upgrade"
   #define D_JSON_ONE_OR_GT "1 or >%s to upgrade"
@@ -353,6 +353,7 @@
 #define D_CMND_RFLOW "RfLow"
 #define D_CMND_RFSYNC "RfSync"
   #define D_JSON_RFRECEIVED "RfReceived"
+#define D_CMND_RFRAW "RfRaw"
 
 // Commands xdrv_07_domoticz.ino
 #define D_CMND_DOMOTICZ "Domoticz"
@@ -519,7 +520,7 @@ const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
 const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
 const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 
-// webserver.ino
+// xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_TEMP[] PROGMEM = "%s{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";                                      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>

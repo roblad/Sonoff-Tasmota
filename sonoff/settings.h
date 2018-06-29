@@ -53,8 +53,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
     uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
-    uint32_t spare28 : 1;
-    uint32_t spare29 : 1;
+    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
+    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
     uint32_t spare30 : 1;
     uint32_t spare31 : 1;
   };
@@ -216,8 +216,9 @@ struct SYSCFG {
   uint16_t      blinkcount;                // 39C
   uint16_t      light_rotation;            // 39E
 
-  byte          free_3A0[12];              // 3A9
+  byte          free_3A0[4];               // 3A0
 
+  uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
@@ -243,7 +244,9 @@ struct SYSCFG {
   uint16_t      light_wakeup;              // 4A6
   byte          knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
-  uint8_t       switchmode[MAX_SWITCHES];  // 4CA
+
+  uint8_t       ex_switchmode[4];          // 4CA  Free since 6.0.0a
+
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
@@ -277,16 +280,12 @@ struct SYSCFG {
                                            // 800 Full - no more free locations
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-
-                                           // E00 - FFF free locations
-
   //STB mod
   byte          free_680[200];             // A80  give me some space to do configuration without override
   unsigned long uptime;                    // 748
   uint8_t       pcf8574_config[8];         // 74B
   uint8_t       all_relays_inverted;       //
   uint32_t      deepsleep;                 //
-  //unsigned long      deepsleep;                 //
   uint16_t      pulse_devider[MAX_COUNTERS];     //
   //end
                                            // 6B0 - FFF free locations
@@ -303,8 +302,6 @@ struct RTCMEM {
   //STB mod
   unsigned long uptime;
   uint32_t      ultradeepsleep;
-  //unsigned long      ultradeepsleep;
-  //uint32_t      deepsleep
   //end
 } RtcSettings;
 
@@ -333,6 +330,29 @@ struct XDRVMAILBOX {
   char         *topic;
   char         *data;
 } XdrvMailbox;
+
+#define MAX_RULES_FLAG  5                  // Number of bits used in RulesBitfield (tricky I know...)
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+  uint16_t data;                           // Allow bit manipulation
+  struct {
+    uint16_t system_boot : 1;
+    uint16_t time_init : 1;
+    uint16_t time_set : 1;
+    uint16_t mqtt_connected : 1;
+    uint16_t mqtt_disconnected : 1;
+    uint16_t spare05 : 1;
+    uint16_t spare06 : 1;
+    uint16_t spare07 : 1;
+    uint16_t spare08 : 1;
+    uint16_t spare09 : 1;
+    uint16_t spare10 : 1;
+    uint16_t spare11 : 1;
+    uint16_t spare12 : 1;
+    uint16_t spare13 : 1;
+    uint16_t spare14 : 1;
+    uint16_t spare15 : 1;
+  };
+} RulesBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC

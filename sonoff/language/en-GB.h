@@ -199,12 +199,6 @@
 #define D_FOUND_AT "found at"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog Host not found"
 
-//STB mod
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-//end
-
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Saved to flash at"
 #define D_LOADED_FROM_FLASH_AT "Loaded from flash at"
@@ -327,6 +321,10 @@
 #define D_UPLOAD_ERR_7 "Upload aborted"
 #define D_UPLOAD_ERR_8 "File invalid"
 #define D_UPLOAD_ERR_9 "File too large"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Upload error code"
 
 #define D_ENTER_COMMAND "Enter command"
@@ -473,6 +471,13 @@
 #define D_SENSOR_SDM120_RX "SDM120 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
+
+
+
+
 //stb mod
 #define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
 // end
@@ -527,5 +532,12 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
-
+//STB mod
+#define D_JSON_MOISTURE "Moisture"
+#define D_JSON_DISTANCE "Distance"
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+#define D_CMND_MQTTENABLE "MqttEnable"
+//#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
+//end
 #endif  // _LANGUAGE_EN_GB_H_

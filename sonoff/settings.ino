@@ -380,7 +380,7 @@ void SettingsDefaultSet2()
 {
   memset((char*)&Settings +16, 0x00, sizeof(SYSCFG) -16);
 
-  //Settings.flag.value_units = 0;
+//  Settings.flag.value_units = 0;
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
   Settings.sleep = APP_SLEEP;
@@ -557,9 +557,11 @@ void SettingsDefaultSet2()
   //Settings.flag.decimal_text = 0;
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
-  //STB mod
-    Settings.deepsleep = 0;
-  //end
+
+//STB mod
+  Settings.deepsleep = 0;
+//end
+
   for (byte i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
 //    Settings.pwm_value[i] = 0;
@@ -769,6 +771,20 @@ void SettingsDelta()
     if (Settings.version < 0x06000000) {
       Settings.cfg_size = sizeof(SYSCFG);
       Settings.cfg_crc = GetSettingsCrc();
+    }
+    if (Settings.version < 0x06000002) {
+      for (byte i = 0; i < MAX_SWITCHES; i++) {
+        if (i < 4) {
+          Settings.switchmode[i] = Settings.ex_switchmode[i];
+        } else {
+          Settings.switchmode[i] = SWITCH_MODE;
+        }
+      }
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
+          Settings.my_gp.io[i] += 4;
+        }
+      }
     }
 
     Settings.version = VERSION;
