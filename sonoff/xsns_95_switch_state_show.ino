@@ -28,7 +28,7 @@
 \*********************************************************************************************/
 //stb
 #ifdef SWITCH_STATE_SHOW
-
+#define IDX_FLAG_SWITCH (11) //set idx flag
 #ifdef USE_WEBSERVER
 
 const char HTTP_SWITCH_STATE[] PROGMEM = "%s{s}" D_SENSOR_SWITCH "%d{m} %s{e}";
@@ -49,9 +49,21 @@ void SwitchStateShow(boolean json)
           char topic[25];
           snprintf_P(topic,sizeof(topic),PSTR("stat/%s/SWITCH%d"),Settings.switch_topic,i+1);
           char *test=GetStateText(swm ^ lastwallswitch[i]);
-          MqttClient.publish(topic,test,true);
-        }
+          MqttClient.publish(topic,test,Settings.flag.mqtt_switch_retain);
+
+#ifdef USE_DOMOTICZ
+
+      if (0 == tele_period ){
+        char data[55];
+        snprintf_P(data,sizeof(data),PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),i+1,test);
+        //MqttPublish(domoticz_in_topic);
+        MqttClient.publish(domoticz_in_topic, data,Settings.flag.mqtt_switch_retain);
+
+      }
+#endif
+
     }
+  }
 
 
 #ifdef USE_WEBSERVER
