@@ -68,7 +68,7 @@ void HardBridgeInput()
   //snprintf_P(print_buff, sizeof(print_buff), PSTR("{\"" D_JSON_TIME "\":\"%s\",%s}"), GetDateAndTime(DT_LOCAL).c_str(),node_bridge_buffer);
   //MqttPublishPrefixTopic_P(TELE, PSTR("NODE"),0);
   //"Node":{"No":2,"Volt":4.182,"Gas":14385.96}"
-  delay(2);
+  //delay(2);
       no2=(uint8_t)(mqtt_buff[13] -48);
 
       snprintf_P(Time2, sizeof(Time2), PSTR("%s"), GetDateAndTime(DT_LOCAL).c_str());

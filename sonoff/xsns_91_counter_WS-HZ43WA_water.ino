@@ -37,7 +37,7 @@
 //set counterdevider
 //#if COUNTERDEVIDER !=4100
 //#undef COUNTERDEVIDER
-#define COUNTERDEVIDER_HZ 410
+//#define COUNTERDEVIDER_HZ 400
 
 //#endif
 #ifdef USE_DOMOTICZ
@@ -58,7 +58,7 @@ void hz43wb_CounterShow(boolean json)
 
 
   char countingd[10];
-  dtostrf((((float)RtcSettings.pulse_counter[0]/COUNTERDEVIDER_HZ)/DELIMETER),4,3,countingd);
+  dtostrf((((float)RtcSettings.pulse_counter[0]/Settings.pulse_devider[0])/DELIMETER),4,3,countingd);
 
   if (json) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"WATER\":{\"CW\":%s}"), mqtt_data,countingd);

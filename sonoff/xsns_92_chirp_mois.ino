@@ -38,6 +38,9 @@
 
 
 //#define CHIRP_CONTINUOUS_HIGH_RES_MODE 0x10 // Start measurement at 1lx //resolution. Measurement time is approx 120ms.
+#ifdef D_JSON_MOISTURE
+#undef D_JSON_MOISTURE
+#endif
 #define D_JSON_MOISTURE "Moisture"
 #define CHIRP_CAPACITANCE_MIN 230  //calibrate CAPACITANCE min value
 #define CHIRP_CAPACITANCE_MAX 750  //calibrate CAPACITANCE max value

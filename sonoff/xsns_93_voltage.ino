@@ -20,7 +20,7 @@
 #ifdef USE_VOLTAGE
 #define VCC_MEASUR 5.0 // value could be betwen for voltage divider ADC in A0 need to be measured as max when 1023
 #ifndef VCC_MEASUR_CORRECTION
-#define VCC_MEASUR_CORRECTION (0) //for 1Mohm/250k A0 wemeos -7 is correction - ADC is pure in ESP
+#define VCC_MEASUR_CORRECTION 350 //for 1Mohm/250k A0 wemeos -7 is correction - ADC is pure in ESP
 #endif
 /*********************************************************************************************\
  * sensor supply is 5V the additional voltage devider measurment is needed, and separate supply
@@ -54,7 +54,7 @@ uint32_t Voltage()
   }
   analog >>= 5;
   delayMicroseconds(1000);
-  analog = (((VCC_MEASUR / 1023) * analog)*1000) + VCC_MEASUR_CORRECTION;
+  analog = ((((VCC_MEASUR / 1023) * analog)*1000) + VCC_MEASUR_CORRECTION);
   delayMicroseconds(500);
   return analog;
 }
