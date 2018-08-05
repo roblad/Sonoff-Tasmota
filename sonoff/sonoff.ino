@@ -25,7 +25,7 @@
     - Select IDE Tools - Flash Size: "1M (no SPIFFS)"
   ====================================================*/
 
-#define VERSION                0x06010102   // 6.1.1b
+#define VERSION                0x06010103   // 6.1.1c
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
@@ -154,7 +154,8 @@ int prep_called = 0;                // additional flag to detect a proper start 
 unsigned long last_save_uptime = 0;   // Loop timer to calculate ontime
 uint8_t last_source = 0;
 byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
-uint8_t shutter_type = 1;                     // shutter types
+//uint8_t shutter_type = 1;                     // shutter types
+uint8_t shutters_present = 0;
 //end
 
 #ifdef USE_MQTT_TLS
@@ -197,14 +198,14 @@ uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
 uint8_t light_type = 0;                     // Light types
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-//STB  mod
-//byte max_pcf8574_devices = 0;         // Max numbers of PCF8574 modules
-//end
-
 boolean mdns_begun = false;
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 StateBitfield global_state;
 RulesBitfield rules_flag;
+
+uint32_t global_update = 0;
+float global_temperature = 0;
+float global_humidity = 0;
 
 char my_version[33];                        // Composed version string
 char my_hostname[33];                       // Composed Wifi hostname
@@ -699,6 +700,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 7:            // mqtt_switch_retain (CMND_SWITCHRETAIN)
               case 9:            // mqtt_sensor_retain (CMND_SENSORRETAIN)
               case 22:           // mqtt_serial (SerialSend and SerialLog)
+              case 23:           // mqtt_serial_raw (SerialSend)
               case 25:           // knx_enabled (Web config)
               case 27:           // knx_enable_enhancement (Web config)
                 ptype = 99;      // Command Error
@@ -905,6 +907,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
         //STB mode
+        Settings.pulse_devider[index -1] = Settings.pulse_devider[index -1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[index -1];
         if ((dataBuf[0] == '-') || (dataBuf[0] == '+')) {
           RtcSettings.pulse_counter[index -1] += payload32 * Settings.pulse_devider[index -1];
           Settings.pulse_counter[index -1] += payload32 * Settings.pulse_devider[index -1];
@@ -935,6 +938,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if (data_len > 0) {
         unsigned long _counter;
+        Settings.pulse_devider[index -1] = Settings.pulse_devider[index -1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[index -1];
         _counter = RtcSettings.pulse_counter[index -1]/Settings.pulse_devider[index -1];
         Settings.pulse_devider[index -1] = payload16;
         RtcSettings.pulse_counter[index -1] = _counter * Settings.pulse_devider[index -1];
@@ -952,16 +956,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         }
       }
     }
-//end
-    else if (CMND_SLEEP == command_code) {
-      if ((payload >= 0) && (payload < 251)) {
-        if ((!Settings.sleep && payload) || (Settings.sleep && !payload)) restart_flag = 2;
-        Settings.sleep = payload;
-        sleep = payload;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
-    }
-    //STB mod
     else if(CMND_DEEPSLEEP == command_code) {
       if ((data_len > 0) && (payload32 >= 0) ) {
         Settings.deepsleep = payload32;
@@ -973,34 +967,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         for (uint i = 0; i < sizeof(power_t)*8; i++) {
             bitWrite(Settings.interlock_mask, i , (i < data_len ? ( (int)dataBuf[i] - 48 ) : 0 ) ); // convert ASCII code 48 = "0" and 49="1"
-          }
-
-
-    //end
-
+        }
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Interlock\":\"0x%x)\"}"), Settings.interlock_mask);
     }
-  }
-//end
 
-    else if ((CMND_UPGRADE == command_code) || (CMND_UPLOAD == command_code)) {
-      // Check if the payload is numerically 1, and had no trailing chars.
-      //   e.g. "1foo" or "1.2.3" could fool us.
-      // Check if the version we have been asked to upgrade to is higher than our current version.
-      //   We also need at least 3 chars to make a valid version number string.
-      if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && NewerVersion(dataBuf))) {
-        ota_state_flag = 3;
-        //        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, Settings.ota_url);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
-      } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, my_version);
-      }
-    }
-    else if (CMND_OTAURL == command_code) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.ota_url)))
-        strlcpy(Settings.ota_url, (1 == payload) ? OTA_URL : dataBuf, sizeof(Settings.ota_url));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.ota_url);
-    }
+//end
     else if (CMND_BAUDRATE == command_code) {
       if (payload32 > 0) {
         payload32 /= 1200;  // Make it a valid baudrate
@@ -1009,15 +981,18 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.baudrate * 1200);
     }
-    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 3)) {
+    else if ((CMND_SERIALSEND == command_code) && (index > 0) && (index <= 4)) {
       SetSeriallog(LOG_LEVEL_NONE);
       Settings.flag.mqtt_serial = 1;
+      Settings.flag.mqtt_serial_raw = (4 == index) ? 1 : 0;
       if (data_len > 0) {
         if (1 == index) {
           Serial.printf("%s\n", dataBuf);
         }
-        else if (2 == index) {
-          Serial.printf("%s", dataBuf);
+        else if (2 == index || 4 == index) {
+          for (int i = 0; i < data_len; i++) {
+            Serial.write(dataBuf[i]);
+          }
         }
         else if (3 == index) {
           uint16_t dat_len = data_len;
@@ -1211,7 +1186,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           ntp_force_sync = 1;
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"Hemisphere\":%d,\"Week\":%d,\"Month\":%d,\"Day\":%d,\"Hour\":%d,\"Offset\":%d\"}}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"Hemisphere\":%d,\"Week\":%d,\"Month\":%d,\"Day\":%d,\"Hour\":%d,\"Offset\":%d}}"),
         command, Settings.tflag[ts].hemis, Settings.tflag[ts].week, Settings.tflag[ts].month, Settings.tflag[ts].dow, Settings.tflag[ts].hour, Settings.toffset[ts]);
     }
     else if (CMND_ALTITUDE == command_code) {
@@ -1344,14 +1319,6 @@ void ExecuteCommandPower(byte device, byte state, int source)
     }
     if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay
       interlock_mutex = 1;
-      for (byte i = 0; i < devices_present; i++) {
-        power_t imask = 1 << i;
-        if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
-      }
-
-
-
-
     //stb mod
       if (Settings.flag3.paired_interlock) {
         //depending on even or odd relay create a 0 or 2 for further calculation
@@ -1491,8 +1458,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (3 == payload)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\"" D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\"" D_CMND_SETOPTION "\":[\"%08X\",\"%08X\"]}}"),
-      Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period, Settings.flag.data, Settings.flag2.data);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\"" D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\"" D_CMND_SETOPTION "\":[\"%08X\",\"%08X\",\"%08X\"]}}"),
+      Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period, Settings.flag.data, Settings.flag2.data, Settings.flag3.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
   }
 
@@ -1679,9 +1646,11 @@ void PerformEverySecond()
     }
   }
 
+  ResetGlobalValues();
+
   if (Settings.tele_period) {
     tele_period++;
-    if (tele_period == Settings.tele_period -1) {
+    if (tele_period >= Settings.tele_period -1 && prep_called == 0) {
       XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
       //STB mode
       prep_called = 1;
@@ -2346,7 +2315,7 @@ void SerialInput()
 #endif  // USE_ENERGY_SENSOR
 /*-------------------------------------------------------------------------------------------*/
 
-    if (serial_in_byte > 127) {                // binary data...
+    if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) { // binary data...
       serial_in_byte_counter = 0;
       Serial.flush();
       return;
@@ -2360,8 +2329,9 @@ void SerialInput()
         }
       }
     } else {
-      if (serial_in_byte) {
-        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
+      if (serial_in_byte || Settings.flag.mqtt_serial_raw) {
+        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&
+            ((serial_in_byte != Settings.serial_delimiter) || Settings.flag.mqtt_serial_raw)) {  // add char to string if it still fits
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
         } else {
@@ -2401,7 +2371,15 @@ void SerialInput()
 
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
     serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+    if (!Settings.flag.mqtt_serial_raw) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
+      for (int i = 0; i < serial_in_byte_counter; i++) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02x"), mqtt_data, serial_in_buffer[i]);
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+    }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
 //    XdrvRulesProcess();
     serial_in_byte_counter = 0;

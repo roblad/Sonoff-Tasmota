@@ -46,10 +46,10 @@ void SwitchStateShow(boolean json)
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
          boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-          char topic[25];
-          snprintf_P(topic,sizeof(topic),PSTR("stat/%s/SWITCH%d"),Settings.switch_topic,i+1);
+          //char topic[25];
+          //snprintf_P(topic,sizeof(topic),PSTR("stat/%s/SWITCH%d"),Settings.switch_topic,i+1);
           char *test=GetStateText(swm ^ lastwallswitch[i]);
-          MqttClient.publish(topic,test,Settings.flag.mqtt_switch_retain);
+          //MqttClient.publish(topic,test,Settings.flag.mqtt_switch_retain);
 
 #ifdef USE_DOMOTICZ
 

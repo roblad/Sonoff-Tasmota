@@ -130,6 +130,24 @@ size_t strchrspn(const char *str1, int character)
   return ret;
 }
 
+// Function to return a substring defined by a delimiter at an index
+char* subStr(char* dest, char* str, const char *delim, int index)
+{
+  char *act;
+  char *sub;
+  char *ptr;
+  int i;
+
+  // Since strtok consumes the first arg, make a copy
+  strncpy(dest, str, strlen(str));
+  for (i = 1, act = dest; i <= index; i++, act = NULL) {
+    sub = strtok_r(act, delim, &ptr);
+    if (sub == NULL) break;
+  }
+  sub = Trim(sub);
+  return sub;
+}
+
 double CharToDouble(char *str)
 {
   // simple ascii to double, because atof or strtod are too large
@@ -394,6 +412,22 @@ float ConvertTemp(float c)
 char TempUnit()
 {
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
+}
+
+void SetGlobalValues(float temperature, float humidity)
+{
+  global_update = uptime;
+  global_temperature = temperature;
+  global_humidity = humidity;
+}
+
+void ResetGlobalValues()
+{
+  if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
+    global_update = 0;
+    global_temperature = 0;
+    global_humidity = 0;
+  }
 }
 
 double FastPrecisePow(double a, double b)
@@ -891,6 +925,19 @@ void GetFeatures()
 /*********************************************************************************************/
 
   feature_sns2 = 0x00000000;
+
+#ifdef USE_MCP230xx
+  feature_sns2 |= 0x00000001;  // xsns_29_mcp230xx.ino
+#endif
+#ifdef USE_MPR121
+  feature_sns2 |= 0x00000002;  // xsns_30_mpr121.ino
+#endif
+#ifdef USE_CCS811
+  feature_sns2 |= 0x00000004;  // xsns_31_ccs811.ino
+#endif
+#ifdef USE_MPU6050
+  feature_sns2 |= 0x00000008;  // xsns_32_mpu6050.ino
+#endif
 }
 
 /*********************************************************************************************\
@@ -1068,10 +1115,22 @@ void WifiBegin(uint8_t flag)
   AddLog(LOG_LEVEL_INFO);
 }
 
+void WifiState(uint8_t state)
+{
+  if (state == global_state.wifi_down) {
+    if (state) {
+      rules_flag.wifi_connected = 1;
+    } else {
+      rules_flag.wifi_disconnected = 1;
+    }
+  }
+  global_state.wifi_down = state ^1;
+}
+
 void WifiCheckIp()
 {
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-    global_state.wifi_down = 0;
+    WifiState(1);
     wifi_counter = WIFI_CHECK_SEC;
     wifi_retry = wifi_retry_init;
     AddLog_P((wifi_status != WL_CONNECTED) ? LOG_LEVEL_INFO : LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CONNECTED));
@@ -1083,7 +1142,7 @@ void WifiCheckIp()
     }
     wifi_status = WL_CONNECTED;
   } else {
-    global_state.wifi_down = 1;
+    WifiState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
     wifi_status = WiFi.status();
     switch (wifi_status) {
@@ -1211,7 +1270,7 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
-        global_state.wifi_down = 0;
+        WifiState(1);
 #ifdef BE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
@@ -1247,7 +1306,7 @@ void WifiCheck(uint8_t param)
         }
 #endif  // USE_KNX
       } else {
-        global_state.wifi_down = 1;
+        WifiState(0);
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
