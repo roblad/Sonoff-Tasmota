@@ -25,12 +25,14 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
+#define XSNS_23             23
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *SDM120Serial;
 
 uint8_t sdm120_type = 1;
-uint8_t sdm120_state = 0;
+//uint8_t sdm120_state = 0;
 
 float sdm120_voltage = 0;
 float sdm120_current = 0;
@@ -41,7 +43,7 @@ float sdm120_power_factor = 0;
 float sdm120_frequency = 0;
 float sdm120_energy_total = 0;
 
-bool SDM120_ModbusReceiveReady()
+bool SDM120_ModbusReceiveReady(void)
 {
   return (SDM120Serial->available() > 1);
 }
@@ -135,11 +137,11 @@ const uint16_t sdm120_start_addresses[] {
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
 
-void SDM12050ms()              // Every 50 mSec
+void SDM120250ms(void)              // Every 250 mSec
 {
-  sdm120_state++;
-  if (6 == sdm120_state) {     // Every 300 mSec
-    sdm120_state = 0;
+//  sdm120_state++;
+//  if (6 == sdm120_state) {     // Every 300 mSec
+//    sdm120_state = 0;
 
     float value = 0;
     bool data_ready = SDM120_ModbusReceiveReady();
@@ -198,10 +200,10 @@ void SDM12050ms()              // Every 50 mSec
     } else {
       sdm120_send_retry--;
     }
-  } // end 300 ms
+//  } // end 300 ms
 }
 
-void SDM120Init()
+void SDM120Init(void)
 {
   sdm120_type = 0;
   if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
@@ -246,7 +248,7 @@ void SDM120Show(boolean json)
   dtostrfd(sdm120_apparent_power, Settings.flag2.wattage_resolution, apparent_power);
   dtostrfd(sdm120_reactive_power, Settings.flag2.wattage_resolution, reactive_power);
   dtostrfd(sdm120_power_factor, 2, power_factor);
-  dtostrfd(sdm120_frequency, 2, frequency);
+  dtostrfd(sdm120_frequency, Settings.flag2.frequency_resolution, frequency);
   dtostrfd(sdm120_energy_total, Settings.flag2.energy_resolution, energy_total);
 
   if (json) {
@@ -256,7 +258,7 @@ void SDM120Show(boolean json)
     if (0 == tele_period) {
       DomoticzSensor(DZ_VOLTAGE, voltage);
       DomoticzSensor(DZ_CURRENT, current);
-      DomoticzSensorPowerEnergy((uint16_t)sdm120_active_power, energy_total);
+      DomoticzSensorPowerEnergy((int)sdm120_active_power, energy_total);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
@@ -270,8 +272,6 @@ void SDM120Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_23
-
 boolean Xsns23(byte function)
 {
   boolean result = false;
@@ -281,8 +281,8 @@ boolean Xsns23(byte function)
       case FUNC_INIT:
         SDM120Init();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        SDM12050ms();
+      case FUNC_EVERY_250_MSECOND:
+        SDM120250ms();
         break;
       case FUNC_JSON_APPEND:
         SDM120Show(1);

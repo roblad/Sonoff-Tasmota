@@ -19,21 +19,7 @@
 
 #ifdef USE_DOMOTICZ
 
-#ifdef USE_WEBSERVER
-const char HTTP_FORM_DOMOTICZ[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='4,1' hidden>"
-  "<br/><table>";
-const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " {1</b></td><td style='width:70px'><input id='r{1' name='r{1' placeholder='0' value='{2'></td></tr>"
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " {1</b></td><td style='width:70px'><input id='k{1' name='k{1' placeholder='0' value='{3'></td></tr>";
-  const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " {1</b></td><td style='width:70px'><input id='s{1' name='s{1' placeholder='0' value='{4'></td></tr>";
-const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " {1</b> {2</td><td style='width:70px'><input id='l{1' name='l{1' placeholder='0' value='{5'></td></tr>";
-const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
-#endif  // USE_WEBSERVER
+#define XDRV_07             7
 
 const char DOMOTICZ_MESSAGE[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}";
 
@@ -46,8 +32,10 @@ const char kDomoticzCommands[] PROGMEM = D_CMND_IDX "|" D_CMND_KEYIDX "|" D_CMND
   #error "Domoticz: Too many sensors or change settings.h layout"
 #endif
 
+//stb mod
 const char kDomoticzSensors[] PROGMEM =
-  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY ;
+  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY "|" D_DOMOTICZ_SHUTTER;
+//end
 
 const char S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%d}";
 const char S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%lu}";
@@ -56,10 +44,11 @@ char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
 
 boolean domoticz_subscribe = false;
-int domoticz_update_timer = 0;
 byte domoticz_update_flag = 1;
+int domoticz_update_timer = 0;
+unsigned long fan_debounce = 0;             // iFan02 state debounce timer
 
-int DomoticzBatteryQuality()
+int DomoticzBatteryQuality(void)
 {
   // Battery 0%: ESP 2.6V (minimum operating voltage is 2.5)
   // Battery 100%: ESP 3.6V (maximum operating voltage is 3.6)
@@ -78,25 +67,52 @@ int DomoticzBatteryQuality()
   return quality;
 }
 
-int DomoticzRssiQuality()
+int DomoticzRssiQuality(void)
 {
   // RSSI range: 0% to 10% (12 means disable RSSI in Domoticz)
 
   return WifiGetRssiAsQuality(WiFi.RSSI()) / 10;
 }
 
+void MqttPublishDomoticzFanState()
+{
+  if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[1]) {
+    char svalue[8];  // Fanspeed value
+
+    int fan_speed = GetFanspeed();
+    snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fan_speed * 10);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
+      Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+    MqttPublish(domoticz_in_topic);
+
+    fan_debounce = millis();
+  }
+}
+
+void DomoticzUpdateFanState()
+{
+  if (domoticz_update_flag) {
+    MqttPublishDomoticzFanState();
+  }
+  domoticz_update_flag = 1;
+}
+
 void MqttPublishDomoticzPowerState(byte device)
 {
-  char sdimmer[8];
+  if (Settings.flag.mqtt_enabled) {
+    if ((device < 1) || (device > devices_present)) { device = 1; }
+    if (Settings.domoticz_relay_idx[device -1]) {
+      if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+        // Fan handled by MqttPublishDomoticzFanState
+      } else {
+        char svalue[8];  // Dimmer value
 
-  if ((device < 1) || (device > devices_present)) {
-    device = 1;
-  }
-  if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[device -1]) {
-    snprintf_P(sdimmer, sizeof(sdimmer), PSTR("%d"), Settings.light_dimmer);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-      Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? sdimmer : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
-    MqttPublish(domoticz_in_topic);
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
+          Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
+        MqttPublish(domoticz_in_topic);
+      }
+    }
   }
 }
 
@@ -108,20 +124,25 @@ void DomoticzUpdatePowerState(byte device)
   domoticz_update_flag = 1;
 }
 
-void DomoticzMqttUpdate()
+void DomoticzMqttUpdate(void)
 {
   if (domoticz_subscribe && (Settings.domoticz_update_timer || domoticz_update_timer)) {
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
       for (byte i = 1; i <= devices_present; i++) {
-        MqttPublishDomoticzPowerState(i);
+        if ((SONOFF_IFAN02 == Settings.module) && (i > 1)) {
+          MqttPublishDomoticzFanState();
+          break;
+        } else {
+          MqttPublishDomoticzPowerState(i);
+        }
       }
     }
   }
 }
 
-void DomoticzMqttSubscribe()
+void DomoticzMqttSubscribe(void)
 {
   uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
   for (byte i = 0; i < maxdev; i++) {
@@ -151,13 +172,22 @@ void DomoticzMqttSubscribe()
    "switchType" : "Dimmer",
    "unit" : 1
 }
+ * Fail on this one
+{
+   "LastUpdate" : "2018-10-02 20:39:45",
+   "Name" : "Sfeerverlichting",
+   "Status" : "Off",
+   "Timers" : "true",
+   "Type" : "Group",
+   "idx" : "2"
+}
 */
 
-boolean DomoticzMqttData()
+boolean DomoticzMqttData(void)
 {
   char stemp1[10];
   unsigned long idx = 0;
-  int16_t nvalue;
+  int16_t nvalue = -1;
   int16_t found = 0;
 
   domoticz_update_flag = 1;
@@ -174,27 +204,66 @@ boolean DomoticzMqttData()
 //      return 1;
 //    }
     idx = domoticz["idx"];
-    nvalue = domoticz["nvalue"];
+    if (domoticz.containsKey("nvalue")) {
+      nvalue = domoticz["nvalue"];
+    }
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
     AddLog(LOG_LEVEL_DEBUG_MORE);
 
-    if ((idx > 0) && (nvalue >= 0) && (nvalue <= 2)) {
+    if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
       for (byte i = 0; i < maxdev; i++) {
         if (idx == Settings.domoticz_relay_idx[i]) {
+          bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-          if (2 == nvalue) {
-            nvalue = domoticz["svalue1"];
+          if ((SONOFF_IFAN02 == Settings.module) && (1 == i)) {  // Idx 2 is fanspeed
+            uint8_t svalue = 0;
+            if (domoticz.containsKey("svalue1")) {
+              svalue = domoticz["svalue1"];
+            } else {
+              return 1;
+            }
+            svalue = (nvalue == 2) ? svalue / 10 : 0;
+            if (GetFanspeed() == svalue) {
+              return 1;  // Stop loop as already set
+            }
+            if (TimePassedSince(fan_debounce) < 1000) {
+              return 1;  // Stop loop if device in limbo
+            }
+            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_FANSPEED));
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), svalue);
+            found = 1;
+          }
+          else if (iscolordimmer && 10 == nvalue) { // Color_SetColor
+            JsonObject& color = domoticz["Color"];
+            uint16_t level = nvalue = domoticz["svalue1"];
+            uint16_t r = color["r"]; r = r * level / 100;
+            uint16_t g = color["g"]; g = g * level / 100;
+            uint16_t b = color["b"]; b = b * level / 100;
+            uint16_t cw = color["cw"]; cw = cw * level / 100;
+            uint16_t ww = color["ww"]; ww = ww * level / 100;
+            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLOR));
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%02x%02x%02x%02x%02x"), r, g, b, cw, ww);
+            found = 1;
+          }
+          else if ((!iscolordimmer && 2 == nvalue) || // gswitch_sSetLevel
+                   (iscolordimmer && 15 == nvalue)) { // Color_SetBrightnessLevel
+            if (domoticz.containsKey("svalue1")) {
+              nvalue = domoticz["svalue1"];
+            } else {
+              return 1;
+            }
             if (light_type && (Settings.light_dimmer == nvalue) && ((power >> i) &1)) {
               return 1;
             }
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_DIMMER));
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), nvalue);
             found = 1;
-          } else {
+          }
+          else if (1 == nvalue || 0 == nvalue) {
             if (((power >> i) &1) == (power_t)nvalue) {
-              return 1;
+              return 1;  // Stop loop
             }
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_POWER "%s"), (devices_present > 1) ? stemp1 : "");
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), nvalue);
@@ -220,7 +289,7 @@ boolean DomoticzMqttData()
  * Commands
 \*********************************************************************************************/
 
-boolean DomoticzCommand()
+boolean DomoticzCommand(void)
 {
   char command [CMDSZ];
   boolean serviced = true;
@@ -316,6 +385,13 @@ void DomoticzSensor(byte idx, char *data)
     if (DZ_AIRQUALITY == idx) {
       snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
         Settings.domoticz_sensor_idx[idx], data, DomoticzBatteryQuality(), DomoticzRssiQuality());
+//STB mod
+} else if (DZ_SHUTTER == idx) {
+  byte position;
+  position = atoi(data);
+  snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
+    Settings.domoticz_sensor_idx[idx], position < 2 ? 0 : ( position == 100 ? 1 : 2), data, DomoticzBatteryQuality(), DomoticzRssiQuality());
+//end
     } else {
       snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
         Settings.domoticz_sensor_idx[idx], 0, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
@@ -346,7 +422,7 @@ void DomoticzTempHumPressureSensor(char *temp, char *hum, char *baro)
   DomoticzSensor(DZ_TEMP_HUM_BARO, data);
 }
 
-void DomoticzSensorPowerEnergy(uint16_t power, char *energy)
+void DomoticzSensorPowerEnergy(int power, char *energy)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d;%s"), power, energy);
@@ -358,15 +434,38 @@ void DomoticzSensorPowerEnergy(uint16_t power, char *energy)
 \*********************************************************************************************/
 
 #ifdef USE_WEBSERVER
+
+#define WEB_HANDLE_DOMOTICZ "dm"
+
 const char S_CONFIGURE_DOMOTICZ[] PROGMEM = D_CONFIGURE_DOMOTICZ;
 
-void HandleDomoticzConfiguration()
+const char HTTP_BTN_MENU_DOMOTICZ[] PROGMEM =
+  "<br/><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>";
+
+const char HTTP_FORM_DOMOTICZ[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend><form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
+  "<br/><table>";
+const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " {1</b></td><td style='width:70px'><input id='r{1' name='r{1' placeholder='0' value='{2'></td></tr>"
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " {1</b></td><td style='width:70px'><input id='k{1' name='k{1' placeholder='0' value='{3'></td></tr>";
+  const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " {1</b></td><td style='width:70px'><input id='s{1' name='s{1' placeholder='0' value='{4'></td></tr>";
+const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " {1</b> {2</td><td style='width:70px'><input id='l{1' name='l{1' placeholder='0' value='{5'></td></tr>";
+const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
+
+void HandleDomoticzConfiguration(void)
 {
-  if (HTTP_USER == webserver_state) {
-    HandleRoot();
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
+
+  if (WebServer->hasArg("save")) {
+    DomoticzSaveSettings();
+    WebRestart(1);
     return;
   }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
   char stemp[32];
 
@@ -385,6 +484,7 @@ void HandleDomoticzConfiguration()
       page.replace("{4", String((int)Settings.domoticz_switch_idx[i]));
     }
     page.replace("{1", String(i +1));
+    if ((SONOFF_IFAN02 == Settings.module) && (1 == i)) { break; }
   }
   for (int i = 0; i < DZ_MAX_SENSORS; i++) {
     page += FPSTR(HTTP_FORM_DOMOTICZ_SENSOR);
@@ -400,7 +500,7 @@ void HandleDomoticzConfiguration()
   ShowPage(page);
 }
 
-void DomoticzSaveSettings()
+void DomoticzSaveSettings(void)
 {
   char stemp[20];
   char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
@@ -440,14 +540,20 @@ void DomoticzSaveSettings()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_07
-
 boolean Xdrv07(byte function)
 {
   boolean result = false;
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_BUTTON:
+        strncat_P(mqtt_data, HTTP_BTN_MENU_DOMOTICZ, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+        break;
+      case FUNC_WEB_ADD_HANDLER:
+        WebServer->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DomoticzCommand();
         break;

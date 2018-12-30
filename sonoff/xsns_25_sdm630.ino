@@ -25,12 +25,14 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
+#define XSNS_25             25
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *SDM630Serial;
 
 uint8_t sdm630_type = 1;
-uint8_t sdm630_state = 0;
+//uint8_t sdm630_state = 0;
 
 float sdm630_voltage[] = {0,0,0};
 float sdm630_current[] = {0,0,0};
@@ -39,7 +41,7 @@ float sdm630_reactive_power[] = {0,0,0};
 float sdm630_power_factor[] = {0,0,0};
 float sdm630_energy_total = 0;
 
-bool SDM630_ModbusReceiveReady()
+bool SDM630_ModbusReceiveReady(void)
 {
   return (SDM630Serial->available() > 1);
 }
@@ -141,11 +143,11 @@ const uint16_t sdm630_start_addresses[] {
 uint8_t sdm630_read_state = 0;
 uint8_t sdm630_send_retry = 0;
 
-void SDM63050ms()              // Every 50 mSec
+void SDM630250ms(void)              // Every 250 mSec
 {
-  sdm630_state++;
-  if (6 == sdm630_state) {     // Every 300 mSec
-    sdm630_state = 0;
+//  sdm630_state++;
+//  if (6 == sdm630_state) {     // Every 300 mSec
+//    sdm630_state = 0;
 
     float value = 0;
     bool data_ready = SDM630_ModbusReceiveReady();
@@ -236,10 +238,10 @@ void SDM63050ms()              // Every 50 mSec
     } else {
       sdm630_send_retry--;
     }
-  } // end 300 ms
+//  } // end 300 ms
 }
 
-void SDM630Init()
+void SDM630Init(void)
 {
   sdm630_type = 0;
   if ((pin[GPIO_SDM630_RX] < 99) && (pin[GPIO_SDM630_TX] < 99)) {
@@ -325,8 +327,6 @@ void SDM630Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_25
-
 boolean Xsns25(byte function)
 {
   boolean result = false;
@@ -336,8 +336,8 @@ boolean Xsns25(byte function)
       case FUNC_INIT:
         SDM630Init();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        SDM63050ms();
+      case FUNC_EVERY_250_MSECOND:
+        SDM630250ms();
         break;
       case FUNC_JSON_APPEND:
         SDM630Show(1);

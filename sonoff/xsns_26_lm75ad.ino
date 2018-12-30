@@ -28,6 +28,8 @@
  * I2C Address: 0x48 - 0x4F
 \*********************************************************************************************/
 
+#define XSNS_26                 26
+
 #define LM75AD_ADDRESS1					0x48
 #define LM75AD_ADDRESS2					0x49
 #define LM75AD_ADDRESS3					0x4A
@@ -46,7 +48,7 @@ uint8_t lm75ad_type = 0;
 uint8_t lm75ad_address;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
 
-void LM75ADDetect()
+void LM75ADDetect(void)
 {
   if (lm75ad_type) { return; }
 
@@ -64,7 +66,7 @@ void LM75ADDetect()
   }
 }
 
-float LM75ADGetTemp() {
+float LM75ADGetTemp(void) {
   int16_t sign = 1;
 
   uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER);
@@ -100,8 +102,6 @@ void LM75ADShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_26
 
 boolean Xsns26(byte function)
 {

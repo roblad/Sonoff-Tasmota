@@ -35,6 +35,8 @@
  *
 \*********************************************************************************************/
 
+#define XDRV_09             9
+
 enum TimerCommands { CMND_TIMER, CMND_TIMERS
 #ifdef USE_SUNRISE
 , CMND_LATITUDE, CMND_LONGITUDE
@@ -62,7 +64,7 @@ const double pi2 = TWO_PI;
 const double pi = PI;
 const double RAD = DEG_TO_RAD;
 
-double JulianischesDatum()
+double JulianischesDatum(void)
 {
   // Gregorianischer Kalender
   int Gregor;
@@ -131,7 +133,7 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
 //  double Zeitzone = 0; //Weltzeit
 //  double Zeitzone = 1; //Winterzeit
 //  double Zeitzone = 2.0;   //Sommerzeit
-  double Zeitzone = ((double)time_timezone) / 10;
+  double Zeitzone = ((double)time_timezone) / 60;
   double Zeitgleichung = BerechneZeitgleichung(&DK, T);
   double Minuten = Zeitgleichung * 60.0;
   double Zeitdifferenz = 12.0*acos((sin(h) - sin(B)*sin(DK)) / (cos(B)*cos(DK)))/pi;
@@ -194,7 +196,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
 
   // apply offsets, check for over- and underflows
   uint16_t timeBuffer;
-  if ((uint16_t)stored.time > 720) {
+  if ((uint16_t)stored.time > 719) {
     // negative offset, time after 12:00
     timeBuffer = (uint16_t)stored.time - 720;
     // check for underflow
@@ -253,12 +255,12 @@ void TimerSetRandomWindow(byte index)
   }
 }
 
-void TimerSetRandomWindows()
+void TimerSetRandomWindows(void)
 {
   for (byte i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
 }
 
-void TimerEverySecond()
+void TimerEverySecond(void)
 {
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
@@ -336,7 +338,7 @@ void PrepShowTimer(uint8_t index)
  * Commands
 \*********************************************************************************************/
 
-boolean TimerCommand()
+boolean TimerCommand(void)
 {
   char command[CMDSZ];
   char dataBufUc[XdrvMailbox.data_len];
@@ -455,6 +457,9 @@ boolean TimerCommand()
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
         Settings.flag3.timers_enable = XdrvMailbox.payload;
       }
+      if (XdrvMailbox.payload == 2) {
+        Settings.flag3.timers_enable = !Settings.flag3.timers_enable;
+      }
     }
 
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
@@ -507,6 +512,14 @@ boolean TimerCommand()
 
 #ifdef USE_WEBSERVER
 #ifdef USE_TIMERS_WEB
+
+#define WEB_HANDLE_TIMER "tm"
+
+const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
+
+const char HTTP_BTN_MENU_TIMER[] PROGMEM =
+  "<br/><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
+
 const char HTTP_TIMER_SCRIPT[] PROGMEM =
   "var pt=[],ct=99;"
   "function qs(s){"                                               // Alias to save code space
@@ -636,8 +649,9 @@ const char HTTP_TIMER_STYLE[] PROGMEM =
 #endif
   "</style>";
 const char HTTP_FORM_TIMER[] PROGMEM =
-  "<fieldset style='min-width:470px;text-align:center;'><legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='7,0' hidden>"
+  "<fieldset style='min-width:470px;text-align:center;'>"
+  "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
   "<br/><input style='width:5%;' id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
   "<input id='t0' name='t0' value='";
 const char HTTP_FORM_TIMER1[] PROGMEM =
@@ -666,18 +680,18 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
   "<span><select style='width:60px;' id='mw' name='mw'></select></span>"
   "</div><br/>"
   "<div id='ds' name='ds'></div>";
-const char HTTP_FORM_TIMER2[] PROGMEM =
-  "type='submit' onclick='st();this.form.submit();'";
 
-const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
-
-void HandleTimerConfiguration()
+void HandleTimerConfiguration(void)
 {
-  if (HTTP_USER == webserver_state) {
-    HandleRoot();
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
+
+  if (WebServer->hasArg("save")) {
+    TimerSaveSettings();
+    HandleConfiguration();
     return;
   }
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_TIMER));
@@ -698,13 +712,12 @@ void HandleTimerConfiguration()
   page.replace(F("299"), String(100 + (strlen(D_SUNSET) *12)));  // Fix string length to keep radios centered
 #endif  // USE_SUNRISE
   page += FPSTR(HTTP_FORM_END);
-  page.replace(F("type='submit'"), FPSTR(HTTP_FORM_TIMER2));
   page += F("<script>it();</script>");  // Init elements and select first tab/button
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
 }
 
-void TimerSaveSettings()
+void TimerSaveSettings(void)
 {
   char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
   Timer timer;
@@ -732,8 +745,6 @@ void TimerSaveSettings()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_09
-
 boolean Xdrv09(byte function)
 {
   boolean result = false;
@@ -742,6 +753,20 @@ boolean Xdrv09(byte function)
     case FUNC_PRE_INIT:
       TimerSetRandomWindows();
       break;
+#ifdef USE_WEBSERVER
+#ifdef USE_TIMERS_WEB
+    case FUNC_WEB_ADD_BUTTON:
+#ifdef USE_RULES
+      strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+#else
+      if (devices_present) { strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1); }
+#endif  // USE_RULES
+      break;
+    case FUNC_WEB_ADD_HANDLER:
+      WebServer->on("/" WEB_HANDLE_TIMER, HandleTimerConfiguration);
+      break;
+#endif  // USE_TIMERS_WEB
+#endif  // USE_WEBSERVER
     case FUNC_EVERY_SECOND:
       TimerEverySecond();
       break;

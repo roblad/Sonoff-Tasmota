@@ -44,7 +44,7 @@ const char HTTP_SNS_ANALOG2[] PROGMEM = "%s{s} " "Napięcie zasilania" "{m}%sV{e
 
 
 
-uint32_t Voltage()
+uint32_t Voltage(void)
 {
   uint32_t analog = 0;
   for (byte i = 0; i < 32; i++) {

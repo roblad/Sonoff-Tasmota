@@ -20,12 +20,14 @@
 #ifdef USE_I2C
 #ifdef USE_CCS811
 /*********************************************************************************************\
- * SGP30 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
+ * CCS811 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
  *
  * Source: Adafruit
  *
  * I2C Address: 0x5A assumes ADDR connected to Gnd, Wake also must be grounded
 \*********************************************************************************************/
+
+#define XSNS_31             31
 
 #include "Adafruit_CCS811.h"
 
@@ -40,7 +42,7 @@ uint8_t ecnt = 0;
 /********************************************************************************************/
 #define EVERYNSECONDS 5
 
-void CCS811Update()  // Perform every n second
+void CCS811Update(void)  // Perform every n second
 {
   tcnt++;
   if (tcnt >= EVERYNSECONDS) {
@@ -100,8 +102,6 @@ void CCS811Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_31
 
 boolean Xsns31(byte function)
 {

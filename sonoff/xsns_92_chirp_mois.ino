@@ -68,7 +68,7 @@ uint16_t chirp_readLux(void)
 }
 
 
-boolean chirp_detect()
+boolean chirp_detect(void)
 {
   if (chirptype) {
     return true;
@@ -111,7 +111,7 @@ boolean chirp_detect()
 const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
 
 
-void chirp_Get() {
+void chirp_Get(void) {
 
  if (chirptype) {
    //https://www.tindie.com/products/miceuz/i2c-soil-moisture-sensor/

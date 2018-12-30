@@ -55,10 +55,11 @@ uint8_t flag2=0;
 
 
 
-void HardBridgeInput()
-
+void HardBridgeInput(void)
+//"Node":{"No":2,"Volt":4.182,"Gas":14385.96}"
 {
   flag=(uint8_t)(serial_in_buffer[13] -48);
+  //flag=2;
   char check = serial_in_buffer[16]; //sizeof(log_data),PSTR("%d-%d"),serial_in_buffer[13],flag);
   //AddLog(LOG_LEVEL_INFO);
   if (flag==2 && check == 'V') {
@@ -69,6 +70,7 @@ void HardBridgeInput()
   //MqttPublishPrefixTopic_P(TELE, PSTR("NODE"),0);
   //"Node":{"No":2,"Volt":4.182,"Gas":14385.96}"
   //delay(2);
+  //"Node":{"No":2,"Volt":3.497,"Gas":15057.06}
       no2=(uint8_t)(mqtt_buff[13] -48);
 
       snprintf_P(Time2, sizeof(Time2), PSTR("%s"), GetDateAndTime(DT_LOCAL).c_str());
@@ -116,8 +118,9 @@ if (json) {
      }
 #ifdef USE_WEBSERVER
  } else {
-
+  //no2=2;
   if (no2==2 && nodegas[0] != '\0'){
+    //&& nodegas[0] != '\0'
   snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_NODE2_SNS,mqtt_data,
   Time2,
   volt2,
@@ -150,7 +153,8 @@ boolean Xsns96(byte function)
       case FUNC_INIT:
 
         break;
-      case FUNC_EVERY_SECOND:
+        //case FUNC_LOOP:
+        case FUNC_EVERY_SECOND:
         HardBridgeInput();
         break;
 
