@@ -442,7 +442,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
 #endif
-#ifdef USE_SDM630
+#if defined USE_SDM630 || defined USE_SDM630RL
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
 #endif

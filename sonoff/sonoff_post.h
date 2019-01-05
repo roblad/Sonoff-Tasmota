@@ -105,6 +105,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
 #define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
 #define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
+//stb mod
+#define USE_SDM630RL                           // Add support for Eastron SDM630-Modbus-RL energy meter (+2k code)
+//end stb
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
 #define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
@@ -171,6 +174,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
+//stb mod
+#undef USE_SDM630RL                             // Disable support for Eastron SDM630-Modbus energy meter
+//end stb
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
@@ -281,6 +287,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
+//stb mod
+#undef USE_SDM630RL                             // Disable support for Eastron SDM630-Modbus energy meter
+//stb
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 //#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -340,6 +349,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SERIAL_BRIDGE                      // Disable support for software Serial Bridge
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
+//stb mod
+#undef USE_SDM630RL                             // Disable support for Eastron SDM630-Modbus energy meter
+//end stb
+
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor

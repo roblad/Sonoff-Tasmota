@@ -164,6 +164,7 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_SERIAL_BRIDGE              | - | - | - | x | x | x |
 | USE_SDM120                     | - | - | - | - | - | x |
 | USE_SDM630                     | - | - | - | - | - | x |
+| USE_SDM630RL                   | - | - | - | - | - | x |
 | USE_MP3_PLAYER                 | - | - | - | - | - | x |
 | USE_TUYA_DIMMER                | - | x | - | x | x | x |
 | USE_IR_REMOTE                  | - | - | - | x | x | x |

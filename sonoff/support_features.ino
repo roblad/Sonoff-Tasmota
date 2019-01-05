@@ -305,6 +305,11 @@ void GetFeatures(void)
 #ifdef USE_LM75AD
   feature_sns1 |= 0x20000000;  // xsns_26_lm75ad.ino
 #endif
+//stb mod
+#ifdef USE_SDM630RL
+  feature_sns1 |= 0x30000000;  // xsns_97_sdm630rl.ino
+#endif
+//end stb
 #ifdef USE_APDS9960
   feature_sns1 |= 0x40000000;  // xsns_27_apds9960.ino
 #endif

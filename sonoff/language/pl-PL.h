@@ -152,7 +152,7 @@
 #define D_POWERUSAGE "Moc"
 #define D_POWERUSAGE_ACTIVE "Czynna Moc"
 #define D_POWERUSAGE_APPARENT "Pozorna Moc"
-#define D_POWERUSAGE_REACTIVE "Reaktywna Moc"
+#define D_POWERUSAGE_REACTIVE "Bierna Moc"
 #define D_PRESSURE "Ciśnienie"
 #define D_PRESSUREATSEALEVEL "Ciśnienie na poziomie morza"
 #define D_PROGRAM_FLASH_SIZE "Wielkość programu flash"

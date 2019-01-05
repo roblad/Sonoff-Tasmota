@@ -29,6 +29,12 @@
 //stb
 #ifdef SWITCH_STATE_SHOW
 #define IDX_FLAG_SWITCH (11) //set idx flag
+#ifdef USE_SDM630RL
+  #ifdef D_SENSOR_SWITCH
+  #undef D_SENSOR_SWITCH
+  #define D_SENSOR_SWITCH   "Zbiornik poziom"
+  #endif
+#endif
 #ifdef USE_WEBSERVER
 
 const char HTTP_SWITCH_STATE[] PROGMEM = "%s{s}" D_SENSOR_SWITCH "%d{m} %s{e}";
@@ -55,7 +61,7 @@ void SwitchStateShow(boolean json)
 
       if (0 == tele_period ){
         char data[55];
-        snprintf_P(data,sizeof(data),PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),i+1,test);
+        snprintf_P(data,sizeof(data),PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),Settings.domoticz_switch_idx[0+i],test);
         //MqttPublish(domoticz_in_topic);
         MqttClient.publish(domoticz_in_topic, data,Settings.flag.mqtt_switch_retain);
 

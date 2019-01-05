@@ -249,7 +249,7 @@ boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for sim
   &Xsns96,
 #endif
 
-#ifdef XSNS_97
+#ifdef XSNS_97  //rl sdm6300
   &Xsns97,
 #endif
 
