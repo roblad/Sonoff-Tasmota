@@ -61,7 +61,7 @@ uint32_t Voltage(void)
 
 
 
-void measureVolt(boolean json)
+void measureVolt(bool json)
 {
 
 char volt[6];
@@ -92,9 +92,9 @@ dtostrf(((float)Voltage()/1000),5,3,volt);
 
 #define XSNS_93
 
-boolean Xsns93(byte function)
+bool Xsns93(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
 
     switch (function) {
@@ -108,7 +108,7 @@ boolean Xsns93(byte function)
         measureVolt(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         measureVolt(0);
         break;
 #endif // USE_WEBSERVER

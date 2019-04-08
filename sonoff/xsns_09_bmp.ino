@@ -1,7 +1,7 @@
 /*
   xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Heiko Krupp and Theo Arends
+  Copyright (C) 2019  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -42,23 +42,26 @@
 #define BMP_MAX_SENSORS      2
 
 const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
+
+typedef struct {
+  uint8_t bmp_address;    // I2C bus address
+  char bmp_name[7];       // Sensor name - "BMPXXX"
+  uint8_t bmp_type;
+  uint8_t bmp_model;
+#ifdef USE_BME680
+  uint8_t bme680_state;
+  float bmp_gas_resistance;
+#endif  // USE_BME680
+  float bmp_temperature;
+  float bmp_pressure;
+  float bmp_humidity;
+} bmp_sensors_t;
+
 uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
 uint8_t bmp_count = 0;
 uint8_t bmp_once = 1;
 
-struct BMPSTRUCT {
-  uint8_t bmp_address;    // I2C bus address
-  char bmp_name[7];       // Sensor name - "BMPXXX"
-  uint8_t bmp_type = 0;
-  uint8_t bmp_model = 0;
-#ifdef USE_BME680
-  uint8_t bme680_state = 0;
-  float bmp_gas_resistance = 0.0;
-#endif  // USE_BME680
-  float bmp_temperature = 0.0;
-  float bmp_pressure = 0.0;
-  float bmp_humidity = 0.0;
-} bmp_sensors[BMP_MAX_SENSORS];
+bmp_sensors_t *bmp_sensors = nullptr;
 
 /*********************************************************************************************\
  * BMP085 and BME180
@@ -83,7 +86,7 @@ struct BMPSTRUCT {
 
 #define BMP180_OSS           3
 
-struct BMP180CALIBDATA {
+typedef struct {
   int16_t  cal_ac1;
   int16_t  cal_ac2;
   int16_t  cal_ac3;
@@ -94,10 +97,17 @@ struct BMP180CALIBDATA {
   uint16_t cal_ac4;
   uint16_t cal_ac5;
   uint16_t cal_ac6;
-} bmp180_cal_data[BMP_MAX_SENSORS];
+} bmp180_cal_data_t;
 
-boolean Bmp180Calibration(uint8_t bmp_idx)
+bmp180_cal_data_t *bmp180_cal_data = nullptr;
+
+bool Bmp180Calibration(uint8_t bmp_idx)
 {
+  if (!bmp180_cal_data) {
+    bmp180_cal_data = (bmp180_cal_data_t*)malloc(BMP_MAX_SENSORS * sizeof(bmp180_cal_data_t));
+  }
+  if (!bmp180_cal_data) { return false; }
+
   bmp180_cal_data[bmp_idx].cal_ac1 = I2cRead16(bmp_sensors[bmp_idx].bmp_address, BMP180_AC1);
   bmp180_cal_data[bmp_idx].cal_ac2 = I2cRead16(bmp_sensors[bmp_idx].bmp_address, BMP180_AC2);
   bmp180_cal_data[bmp_idx].cal_ac3 = I2cRead16(bmp_sensors[bmp_idx].bmp_address, BMP180_AC3);
@@ -140,6 +150,8 @@ boolean Bmp180Calibration(uint8_t bmp_idx)
 
 void Bmp180Read(uint8_t bmp_idx)
 {
+  if (!bmp180_cal_data) { return; }
+
   I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_CONTROL, BMP180_TEMPERATURE);
   delay(5); // 5ms conversion time
   int ut = I2cRead16(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_RESULT);
@@ -211,8 +223,7 @@ void Bmp180Read(uint8_t bmp_idx)
 #define BME280_REGISTER_DIG_H5        0xE5
 #define BME280_REGISTER_DIG_H6        0xE7
 
-struct BME280CALIBDATA
-{
+typedef struct {
   uint16_t dig_T1;
   int16_t  dig_T2;
   int16_t  dig_T3;
@@ -231,11 +242,18 @@ struct BME280CALIBDATA
   uint8_t  dig_H1;
   uint8_t  dig_H3;
   int8_t   dig_H6;
-} Bme280CalibrationData[BMP_MAX_SENSORS];
+} Bme280CalibrationData_t;
 
-boolean Bmx280Calibrate(uint8_t bmp_idx)
+Bme280CalibrationData_t *Bme280CalibrationData = nullptr;
+
+bool Bmx280Calibrate(uint8_t bmp_idx)
 {
   //  if (I2cRead8(bmp_address, BMP_REGISTER_CHIPID) != BME280_CHIPID) return false;
+
+  if (!Bme280CalibrationData) {
+    Bme280CalibrationData = (Bme280CalibrationData_t*)malloc(BMP_MAX_SENSORS * sizeof(Bme280CalibrationData_t));
+  }
+  if (!Bme280CalibrationData) { return false; }
 
   Bme280CalibrationData[bmp_idx].dig_T1 = I2cRead16LE(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_DIG_T1);
   Bme280CalibrationData[bmp_idx].dig_T2 = I2cReadS16_LE(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_DIG_T2);
@@ -270,6 +288,8 @@ boolean Bmx280Calibrate(uint8_t bmp_idx)
 
 void Bme280Read(uint8_t bmp_idx)
 {
+  if (!Bme280CalibrationData) { return; }
+
   int32_t adc_T = I2cRead24(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_TEMPDATA);
   adc_T >>= 4;
 
@@ -324,15 +344,20 @@ void Bme280Read(uint8_t bmp_idx)
 
 #include <bme680.h>
 
-struct bme680_dev gas_sensor[BMP_MAX_SENSORS];
+struct bme680_dev *gas_sensor = nullptr;
 
 static void BmeDelayMs(uint32_t ms)
 {
   delay(ms);
 }
 
-boolean Bme680Init(uint8_t bmp_idx)
+bool Bme680Init(uint8_t bmp_idx)
 {
+  if (!gas_sensor) {
+    gas_sensor = (bme680_dev*)malloc(BMP_MAX_SENSORS * sizeof(bme680_dev));
+  }
+  if (!gas_sensor) { return false; }
+
   gas_sensor[bmp_idx].dev_id = bmp_sensors[bmp_idx].bmp_address;
   gas_sensor[bmp_idx].intf = BME680_I2C_INTF;
   gas_sensor[bmp_idx].read = &I2cReadBuffer;
@@ -377,6 +402,8 @@ boolean Bme680Init(uint8_t bmp_idx)
 
 void Bme680Read(uint8_t bmp_idx)
 {
+  if (!gas_sensor) { return; }
+
   int8_t rslt = BME680_OK;
 
   if (BME680_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
@@ -421,14 +448,21 @@ void BmpDetect(void)
 {
   if (bmp_count) return;
 
-  for (byte i = 0; i < BMP_MAX_SENSORS; i++) {
+  int bmp_sensor_size = BMP_MAX_SENSORS * sizeof(bmp_sensors_t);
+  if (!bmp_sensors) {
+    bmp_sensors = (bmp_sensors_t*)malloc(bmp_sensor_size);
+  }
+  if (!bmp_sensors) { return; }
+  memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
+
+  for (uint8_t i = 0; i < BMP_MAX_SENSORS; i++) {
     uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
       bmp_sensors[bmp_count].bmp_type = bmp_type;
       bmp_sensors[bmp_count].bmp_model = 0;
 
-      boolean success = false;
+      bool success = false;
       switch (bmp_type) {
         case BMP180_CHIPID:
           success = Bmp180Calibration(bmp_count);
@@ -448,8 +482,7 @@ void BmpDetect(void)
       }
       if (success) {
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
         bmp_count++;
       }
     }
@@ -458,7 +491,9 @@ void BmpDetect(void)
 
 void BmpRead(void)
 {
-  for (byte bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+  if (!bmp_sensors) { return; }
+
+  for (uint8_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     switch (bmp_sensors[bmp_idx].bmp_type) {
       case BMP180_CHIPID:
         Bmp180Read(bmp_idx);
@@ -489,17 +524,13 @@ void BmpEverySecond(void)
   }
 }
 
-void BmpShow(boolean json)
+void BmpShow(bool json)
 {
-  for (byte bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+  if (!bmp_sensors) { return; }
+
+  for (uint8_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     if (bmp_sensors[bmp_idx].bmp_type) {
       float bmp_sealevel = 0.0;
-      char temperature[10];
-      char pressure[10];
-      char sea_pressure[10];
-      char humidity[10];
-      char name[10];
-
       if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {
         bmp_sealevel = (bmp_sensors[bmp_idx].bmp_pressure / FastPrecisePow(1.0 - ((float)Settings.altitude / 44330.0), 5.255)) - 21.6;
         bmp_sealevel = ConvertPressure(bmp_sealevel);
@@ -507,17 +538,22 @@ void BmpShow(boolean json)
       float bmp_temperature = ConvertTemp(bmp_sensors[bmp_idx].bmp_temperature);
       float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 
-      snprintf(name, sizeof(name), bmp_sensors[bmp_idx].bmp_name);
+      char name[10];
+      strlcpy(name, bmp_sensors[bmp_idx].bmp_name, sizeof(name));
       if (bmp_count > 1) {
         snprintf_P(name, sizeof(name), PSTR("%s-%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
       }
 
+      char temperature[33];
       dtostrfd(bmp_temperature, Settings.flag2.temperature_resolution, temperature);
+      char pressure[33];
       dtostrfd(bmp_pressure, Settings.flag2.pressure_resolution, pressure);
+      char sea_pressure[33];
       dtostrfd(bmp_sealevel, Settings.flag2.pressure_resolution, sea_pressure);
+      char humidity[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_humidity, Settings.flag2.humidity_resolution, humidity);
 #ifdef USE_BME680
-      char gas_resistance[10];
+      char gas_resistance[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_gas_resistance, 2, gas_resistance);
 #endif  // USE_BME680
 
@@ -530,20 +566,16 @@ void BmpShow(boolean json)
         char json_gas[40];
         snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
 
-        snprintf_P(mqtt_data,
-        sizeof(mqtt_data),
-        PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
-          mqtt_data,
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
           name,
           temperature,
           (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "",
           pressure,
           (Settings.altitude != 0) ? json_sealevel : "",
-          (bmp_sensors[bmp_idx].bmp_model >= 3) ? json_gas : ""
-          );
+          (bmp_sensors[bmp_idx].bmp_model >= 3) ? json_gas : "");
 #else
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
-          mqtt_data, name, temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
+          name, temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME680
 
 #ifdef USE_DOMOTICZ
@@ -564,19 +596,20 @@ void BmpShow(boolean json)
 
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, name, temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_TEMP, name, temperature, TempUnit());
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, name, humidity);
+          WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, name, pressure, PressureUnit().c_str());
+        WSContentSend_PD(HTTP_SNS_PRESSURE, name, pressure, PressureUnit().c_str());
         if (Settings.altitude != 0) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, name, sea_pressure, PressureUnit().c_str());
+          WSContentSend_PD(HTTP_SNS_SEAPRESSURE, name, sea_pressure, PressureUnit().c_str());
         }
 #ifdef USE_BME680
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), mqtt_data, name, gas_resistance);
+          WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
         }
 #endif  // USE_BME680
+
 #endif  // USE_WEBSERVER
       }
     }
@@ -587,9 +620,9 @@ void BmpShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns09(byte function)
+bool Xsns09(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -603,7 +636,7 @@ boolean Xsns09(byte function)
         BmpShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         BmpShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -52,7 +52,7 @@ char chirpstype[7];
 uint16_t light;
 char temperature[6];
 char moisture[6];
-boolean test = false;
+bool test = false;
 uint16_t chirp_readLux(void)
 {
   uint8_t counter = 0;
@@ -68,13 +68,13 @@ uint16_t chirp_readLux(void)
 }
 
 
-boolean chirp_detect(void)
+bool chirp_detect()
 {
   if (chirptype) {
     return true;
   }
   uint8_t status;
-  boolean success = false;
+  bool success = false;
   chirpaddr = CHIRP_ADDR1;
   Wire.beginTransmission(chirpaddr);
   I2cRead8(chirpaddr,TWI_GET_VERSION);
@@ -101,13 +101,11 @@ boolean chirp_detect(void)
  * Presentation
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
- #ifndef USE_BH1750  // avoid duplicate definition
-  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
- #endif //USE_BH1750
-
   const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%%{e}";
 #endif // USE_WEBSERVER
-
+#ifndef USE_BH1750  // avoid duplicate definition
+ const char HTTP_SNS_ILLUMINANCE2[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
+#endif //USE_BH1750
 const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
 
 
@@ -143,7 +141,7 @@ void chirp_Get(void) {
 
 }
 
-void chirp_Show(boolean json)
+void chirp_Show(bool json)
 {
   if (test) {
 
@@ -166,10 +164,9 @@ void chirp_Show(boolean json)
      } else {
 
 
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, chirpstype, light);
+       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE2, mqtt_data, chirpstype, light);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, chirpstype, moisture);
        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
-
   #endif // USE_WEBSERVER
      }
   }
@@ -182,27 +179,25 @@ void chirp_Show(boolean json)
 
 #define XSNS_92
 
-boolean Xsns92(byte function)
+bool Xsns92(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
       case FUNC_INIT:
-        //Wire.setClockStretchLimit(2500);
         chirp_detect();
         break;
       case FUNC_PREP_BEFORE_TELEPERIOD:
         chirp_detect();
-        chirp_Get();
         break;
       case FUNC_JSON_APPEND:
-
+        chirp_Get();
         chirp_Show(1);
 
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         chirp_Show(0);
         break;
 #endif // USE_WEBSERVER

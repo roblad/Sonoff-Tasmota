@@ -20,7 +20,7 @@ FUNC_EVERY_250_MSECOND      |      |          |  x   |      |      |
 FUNC_EVERY_SECOND           |      |          |  x   |  x   |  x   |
 FUNC_PREP_BEFORE_TELEPERIOD |      |          |      |  x   |      | Deprecated. Use a FUNC_EVERY_
 FUNC_JSON_APPEND            |      |          |      |  x   |      | Extend teleperiod JSON text
-FUNC_WEB_APPEND             |      |          |      |  x   |      | Extend webgui ajax info
+FUNC_WEB_SENSOR             |      |          |      |  x   |      | Extend webgui ajax info
 FUNC_SAVE_BEFORE_RESTART    |      |          |      |  x   |      | Just before a planned restart
 FUNC_COMMAND                |  x   |          |  x   |  x   |      | When a command is not recognized
 FUNC_MQTT_SUBSCRIBE         |      | 5.12.0k  |  x   |      |      | At end of MQTT subscriptions

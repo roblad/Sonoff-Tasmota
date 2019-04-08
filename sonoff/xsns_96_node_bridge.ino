@@ -92,7 +92,7 @@ void HardBridgeInput(void)
  * Commands
 \*********************************************************************************************/
 
-void NodeShow(boolean json)
+void NodeShow(bool json)
 {
 
 if (json) {
@@ -144,17 +144,16 @@ if (json) {
 
 #define XSNS_96
 
-boolean Xsns96(byte function)
+bool Xsns96(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
 
      switch (function) {
       case FUNC_INIT:
 
         break;
-        //case FUNC_LOOP:
-        case FUNC_EVERY_SECOND:
+      case FUNC_EVERY_SECOND:
         HardBridgeInput();
         break;
 
@@ -164,7 +163,7 @@ boolean Xsns96(byte function)
         break;
 
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
 
         NodeShow(0);
         break;

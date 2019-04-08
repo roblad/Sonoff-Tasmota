@@ -1,7 +1,7 @@
 /*
   xsns_97_sdm630rl.ino - Eastron SDM630-Modbus energy meter support for Sonoff-Tasmota modyfied by RL
 
-  Copyright (C) 2018  Gennaro Tortone
+  Copyright (C) 2019  Gennaro Tortone
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,10 +26,10 @@
 \*********************************************************************************************/
 #define D_THDLTN "Avr THD L2N"
 #define D_JSON_THDLTN "THDL2N"
-#define D_VOLTAGE_IDX 290
-#define D_CURRENT_IDX 390
-#define D_POWER_IDX 490
-#define D_FACTOR_IDX 590
+#define DZ_VOLTAGE_IDX 290
+#define DZ_CURRENT_IDX 390
+#define DZ_POWER_IDX 490
+#define DZ_FACTOR_IDX 590
 #define XSNS_97             97
 
 
@@ -164,8 +164,7 @@ void SDM630250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SDM630_ModbusReceive(&value);
       if (error) {
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SDM630 response error %d"), error);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM630 response error %d"), error);
       } else {
         switch(sdm630_read_state) {
           case 0:
@@ -282,25 +281,25 @@ const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
 
 #endif  // USE_WEBSERVER
 
-void SDM630Show(boolean json)
+void SDM630Show(bool json)
 {
-  char voltage_l1[10];
-  char voltage_l2[10];
-  char voltage_l3[10];
-  char current_l1[10];
-  char current_l2[10];
-  char current_l3[10];
-  char active_power_l1[10];
-  char active_power_l2[10];
-  char active_power_l3[10];
-  char reactive_power_l1[10];
-  char reactive_power_l2[10];
-  char reactive_power_l3[10];
-  char power_factor_l1[10];
-  char power_factor_l2[10];
-  char power_factor_l3[10];
-  char voltage_thdltn[10];
-  char energy_total[10];
+  char voltage_l1[33];
+  char voltage_l2[33];
+  char voltage_l3[33];
+  char current_l1[33];
+  char current_l2[33];
+  char current_l3[33];
+  char active_power_l1[33];
+  char active_power_l2[33];
+  char active_power_l3[33];
+  char reactive_power_l1[33];
+  char reactive_power_l2[33];
+  char reactive_power_l3[33];
+  char power_factor_l1[33];
+  char power_factor_l2[33];
+  char power_factor_l3[33];
+  char voltage_thdltn[33];
+  char energy_total[33];
 
   dtostrfd(sdm630_voltage[0], 1, voltage_l1);
   dtostrfd(sdm630_voltage[1], 1, voltage_l2);
@@ -341,49 +340,49 @@ void SDM630Show(boolean json)
       switch (i) {
         case 0:
         //{"idx":626,"nvalue":0,"svalue":"732741","Battery":200,"RSSI":10}
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         D_VOLTAGE_IDX, 0, voltage_l1, batq, rssi);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_VOLTAGE_IDX, 0, voltage_l1, batq, rssi);
           MqttPublish(domoticz_in_topic);
           delayMicroseconds(5000);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         D_CURRENT_IDX, 0, current_l1, batq, rssi);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_CURRENT_IDX, 0, current_l1, batq, rssi);
           MqttPublish(domoticz_in_topic);
           delayMicroseconds(5000);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         D_POWER_IDX, 0, active_power_l1, batq, rssi);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_POWER_IDX, 0, active_power_l1, batq, rssi);
           MqttPublish(domoticz_in_topic);
           delayMicroseconds(5000);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,D_FACTOR_IDX, 0, power_factor_l1, batq, rssi);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,DZ_FACTOR_IDX, 0, power_factor_l1, batq, rssi);
           MqttPublish(domoticz_in_topic);
           delayMicroseconds(5000);
         break;
         case 1:
         //{"idx":626,"nvalue":0,"svalue":"732741","Battery":200,"RSSI":10}
          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-         D_VOLTAGE_IDX+1, 0, voltage_l2, batq, rssi);
+         DZ_VOLTAGE_IDX+1, 0, voltage_l2, batq, rssi);
          MqttPublish(domoticz_in_topic);
          delayMicroseconds(5000);
          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-         D_CURRENT_IDX+1, 0, current_l2, batq, rssi);
+         DZ_CURRENT_IDX+1, 0, current_l2, batq, rssi);
          MqttPublish(domoticz_in_topic);
          delayMicroseconds(5000);
          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-         D_POWER_IDX+1, 0, active_power_l2, batq, rssi);
+         DZ_POWER_IDX+1, 0, active_power_l2, batq, rssi);
          MqttPublish(domoticz_in_topic);
          delayMicroseconds(5000);
-         snprintf_P(mqtt_data,sizeof(mqtt_data),DOMOTICZ_MESSAGE,D_FACTOR_IDX+1,0, power_factor_l2, batq, rssi);
+         snprintf_P(mqtt_data,sizeof(mqtt_data),DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+1,0, power_factor_l2, batq, rssi);
          MqttPublish(domoticz_in_topic);
          delayMicroseconds(5000);
         break;
         case 2:
         //{"idx":626,"nvalue":0,"svalue":"732741","Battery":200,"RSSI":10}
-           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         D_VOLTAGE_IDX+2, 0, voltage_l3, batq, rssi);
+           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_VOLTAGE_IDX+2, 0, voltage_l3, batq, rssi);
            MqttPublish(domoticz_in_topic);
            delayMicroseconds(5000);
-           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,        D_CURRENT_IDX+2, 0, current_l3, batq, rssi);
+           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,        DZ_CURRENT_IDX+2, 0, current_l3, batq, rssi);
            MqttPublish(domoticz_in_topic);
            delayMicroseconds(5000);
-           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,D_POWER_IDX+2, 0, active_power_l3, batq, rssi);
+           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,DZ_POWER_IDX+2, 0, active_power_l3, batq, rssi);
            MqttPublish(domoticz_in_topic);
            delayMicroseconds(5000);
-           snprintf_P(mqtt_data, sizeof(mqtt_data),    DOMOTICZ_MESSAGE,D_FACTOR_IDX+2, 0, power_factor_l3, batq, rssi);
+           snprintf_P(mqtt_data, sizeof(mqtt_data),    DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+2, 0, power_factor_l3, batq, rssi);
            MqttPublish(domoticz_in_topic);
            delayMicroseconds(5000);
         break;
@@ -407,9 +406,9 @@ void SDM630Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns97(byte function)
+bool Xsns97(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (sdm630_type) {
     switch (function) {
@@ -423,7 +422,7 @@ boolean Xsns97(byte function)
         SDM630Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SDM630Show(0);
         break;
 #endif  // USE_WEBSERVER

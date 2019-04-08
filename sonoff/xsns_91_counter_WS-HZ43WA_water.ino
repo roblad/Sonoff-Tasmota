@@ -53,7 +53,7 @@
 #endif  // USE_WEBSERVER
 
 
-void hz43wb_CounterShow(boolean json)
+void hz43wb_CounterShow(bool json)
 {
 
 
@@ -92,9 +92,9 @@ void hz43wb_CounterShow(boolean json)
 
 #define XSNS_91
 
-boolean Xsns91(byte function)
+bool Xsns91(byte function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
 
@@ -102,7 +102,7 @@ boolean Xsns91(byte function)
       hz43wb_CounterShow(1);
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_APPEND:
+    case FUNC_WEB_SENSOR:
       hz43wb_CounterShow(0);
       break;
 #endif  // USE_WEBSERVER

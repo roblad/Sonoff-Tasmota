@@ -1,7 +1,7 @@
 /*
   xsns_25_sdm630.ino - Eastron SDM630-Modbus energy meter support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Gennaro Tortone
+  Copyright (C) 2019  Gennaro Tortone
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -155,8 +155,7 @@ void SDM630250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SDM630_ModbusReceive(&value);
       if (error) {
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SDM630 response error %d"), error);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM630 response error %d"), error);
       } else {
         switch(sdm630_read_state) {
           case 0:
@@ -258,7 +257,7 @@ void SDM630Init(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_SDM630_DATA[] PROGMEM =
   "{s}SDM630 " D_VOLTAGE "{m}%s/%s/%s " D_UNIT_VOLT "{e}"
   "{s}SDM630 " D_CURRENT "{m}%s/%s/%s " D_UNIT_AMPERE "{e}"
   "{s}SDM630 " D_POWERUSAGE_ACTIVE "{m}%s/%s/%s " D_UNIT_WATT "{e}"
@@ -267,54 +266,53 @@ const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
   "{s}SDM630 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
-void SDM630Show(boolean json)
+void SDM630Show(bool json)
 {
-  char voltage_l1[10];
-  char voltage_l2[10];
-  char voltage_l3[10];
-  char current_l1[10];
-  char current_l2[10];
-  char current_l3[10];
-  char active_power_l1[10];
-  char active_power_l2[10];
-  char active_power_l3[10];
-  char reactive_power_l1[10];
-  char reactive_power_l2[10];
-  char reactive_power_l3[10];
-  char power_factor_l1[10];
-  char power_factor_l2[10];
-  char power_factor_l3[10];
-  char energy_total[10];
-
+  char voltage_l1[33];
   dtostrfd(sdm630_voltage[0], Settings.flag2.voltage_resolution, voltage_l1);
+  char voltage_l2[33];
   dtostrfd(sdm630_voltage[1], Settings.flag2.voltage_resolution, voltage_l2);
+  char voltage_l3[33];
   dtostrfd(sdm630_voltage[2], Settings.flag2.voltage_resolution, voltage_l3);
+  char current_l1[33];
   dtostrfd(sdm630_current[0], Settings.flag2.current_resolution, current_l1);
+  char current_l2[33];
   dtostrfd(sdm630_current[1], Settings.flag2.current_resolution, current_l2);
+  char current_l3[33];
   dtostrfd(sdm630_current[2], Settings.flag2.current_resolution, current_l3);
+  char active_power_l1[33];
   dtostrfd(sdm630_active_power[0], Settings.flag2.wattage_resolution, active_power_l1);
+  char active_power_l2[33];
   dtostrfd(sdm630_active_power[1], Settings.flag2.wattage_resolution, active_power_l2);
+  char active_power_l3[33];
   dtostrfd(sdm630_active_power[2], Settings.flag2.wattage_resolution, active_power_l3);
+  char reactive_power_l1[33];
   dtostrfd(sdm630_reactive_power[0], Settings.flag2.wattage_resolution, reactive_power_l1);
+  char reactive_power_l2[33];
   dtostrfd(sdm630_reactive_power[1], Settings.flag2.wattage_resolution, reactive_power_l2);
+  char reactive_power_l3[33];
   dtostrfd(sdm630_reactive_power[2], Settings.flag2.wattage_resolution, reactive_power_l3);
+  char power_factor_l1[33];
   dtostrfd(sdm630_power_factor[0], 2, power_factor_l1);
+  char power_factor_l2[33];
   dtostrfd(sdm630_power_factor[1], 2, power_factor_l2);
+  char power_factor_l3[33];
   dtostrfd(sdm630_power_factor[2], 2, power_factor_l3);
+  char energy_total[33];
   dtostrfd(sdm630_energy_total, Settings.flag2.energy_resolution, energy_total);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\""
+    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\""
       D_JSON_ACTIVE_POWERUSAGE "\":[%s,%s,%s],\"" D_JSON_REACTIVE_POWERUSAGE "\":[%s,%s,%s],\""
       D_JSON_POWERFACTOR "\":[%s,%s,%s],\"" D_JSON_VOLTAGE "\":[%s,%s,%s],\"" D_JSON_CURRENT "\":[%s,%s,%s]}"),
-      mqtt_data, energy_total, active_power_l1, active_power_l2, active_power_l3,
+      energy_total, active_power_l1, active_power_l2, active_power_l3,
       reactive_power_l1, reactive_power_l2, reactive_power_l3,
       power_factor_l1, power_factor_l2, power_factor_l3,
       voltage_l1, voltage_l2, voltage_l3,
       current_l1, current_l2, current_l3);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM630_DATA, mqtt_data,
+    WSContentSend_PD(HTTP_SNS_SDM630_DATA,
     voltage_l1, voltage_l2, voltage_l3, current_l1, current_l2, current_l3,
     active_power_l1, active_power_l2, active_power_l3,
     reactive_power_l1, reactive_power_l2, reactive_power_l3,
@@ -327,9 +325,9 @@ void SDM630Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns25(byte function)
+bool Xsns25(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (sdm630_type) {
     switch (function) {
@@ -343,7 +341,7 @@ boolean Xsns25(byte function)
         SDM630Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SDM630Show(0);
         break;
 #endif  // USE_WEBSERVER
