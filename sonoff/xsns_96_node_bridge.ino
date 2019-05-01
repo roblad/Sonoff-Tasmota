@@ -39,7 +39,7 @@
 
 const char HTTP_NODE2_SNS[] PROGMEM =
 
-  "%s{s}" D_UPDATED "{m} %s{e}"
+  "{s}%s" D_UPDATED "{m} %s{e}"
   "{s}" D_VOLTAGE_NODE "{m} %s" D_UNIT_VOLT "{e}"
   "{s}" D_GAS "{m} %s" D_UNIT_GAS "{e}";
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -121,7 +121,7 @@ if (json) {
   //no2=2;
   if (no2==2 && nodegas[0] != '\0'){
     //&& nodegas[0] != '\0'
-  snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_NODE2_SNS,mqtt_data,
+  WSContentSend_PD(HTTP_NODE2_SNS,mqtt_data,
   Time2,
   volt2,
   nodegas);

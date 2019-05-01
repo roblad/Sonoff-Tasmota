@@ -81,7 +81,7 @@ bool chirp_detect()
   delay(50);
   Wire.write(TWI_MEASURE_LIGHT);
   yield();
-  //delay(2000);
+  delay(2000);
   status = Wire.endTransmission();
   if (!status) {
     success = true;
@@ -131,7 +131,7 @@ void chirp_Get(void) {
   } else {
   // Report old value. Do not wait for new value.
   yield();
-  delay(1000);
+  delay(100);
   uint16_t get = I2cRead16(chirpaddr, TWI_GET_LIGHT);
   light = (map(((get) > 58000  ? CHIRP_LIGHT_CALIB : get),CHIRP_LIGHT_CALIB,0,0,100));
   }
@@ -172,6 +172,7 @@ void chirp_Show(bool json)
        WSContentSend_PD(HTTP_SNS_MOISTURE, chirpstype, moisture);
        //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
        WSContentSend_PD(HTTP_SNS_TEMP, chirpstype, temperature, TempUnit());
+       //  WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
   #endif // USE_WEBSERVER
      }
   }

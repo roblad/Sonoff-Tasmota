@@ -86,7 +86,7 @@ int ppm=0;
 byte counter_measure=0;
 // nask for printf
 const char HTTP_GAS[] PROGMEM = "{s}%s" D_GAS " %s{m} %d " D_UNIT_PARTS_PER_MILLION " {e}";
-const char JSON_SNS_GAS[] PROGMEM = "%s,\"" D_GAS "\":{\"Type\":\"%s\",\"ppm\":%d}";
+const char JSON_SNS_GAS[] PROGMEM = ",\"" D_GAS "\":{\"Type\":\"%s\",\"ppm\":%d}";
 
 
 /****************** MQResistanceCalculation ****************************************
@@ -303,8 +303,8 @@ if (counter_measure == 20) {
  counter_measure=0;
 }
   if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_GAS, mqtt_data, gastype, ppm);
-
+      //snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_GAS, mqtt_data, gastype, ppm);
+      ResponseAppend_P(JSON_SNS_GAS,gastype, ppm);
   #ifdef USE_DOMOTICZ
           if (0 == tele_period) {
             DomoticzSensor(DZ_POWER_ENERGY,gastype);
