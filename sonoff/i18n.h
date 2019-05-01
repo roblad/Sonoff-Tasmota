@@ -51,7 +51,7 @@
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
 #define D_JSON_DATA "Data"
-#define D_JSON_DISTANCE "Distance"
+//#define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
 #define D_JSON_DOWNTIME "Downtime"
@@ -184,7 +184,6 @@
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"
 #define D_CMND_DEEPSLEEP "DeepSleep"
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
 // end
 
 #define D_CMND_BACKLOG "Backlog"

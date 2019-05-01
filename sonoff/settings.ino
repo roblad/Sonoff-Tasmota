@@ -823,13 +823,9 @@ void SettingsDefaultSet2(void)
   for (uint8_t j = 0; j < 5; j++) {
     Settings.rgbwwTable[j] = 255;
   }
-//stb
-//#ifdef USE_NOVA_SDS
-//end stb
+
   Settings.novasds_period = WORKING_PERIOD;
-//stb
-//#endif
-//end stb
+
   memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
 

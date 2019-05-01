@@ -21,8 +21,8 @@
 #define _LANGUAGE_PL_PL_D_H_
 
 //STB mod
-//#define D_JSON_MOISTURE "Wilgoc"
-//#define D_JSON_DISTANCE "Odleglosc"
+#define D_JSON_MOISTURE "Wilgoc"
+#define D_JSON_DISTANCE "Odleglosc"
 #define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"

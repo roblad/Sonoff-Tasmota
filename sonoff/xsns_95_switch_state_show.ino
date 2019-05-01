@@ -37,7 +37,7 @@
 #endif
 #ifdef USE_WEBSERVER
 
-const char HTTP_SWITCH_STATE[] PROGMEM = "%s{s}" D_SENSOR_SWITCH "%d{m} %s{e}";
+const char HTTP_SWITCH_STATE[] PROGMEM = "{s}%s " D_SENSOR_SWITCH "%d{m} %s{e}";
 
 
 #endif  // USE_WEBSERVER
@@ -62,6 +62,9 @@ void SwitchStateShow(bool json)
       if (0 == tele_period ){
         char data[55];
         snprintf_P(data,sizeof(data),PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),Settings.domoticz_switch_idx[0+i],test);
+
+
+
         //MqttPublish(domoticz_in_topic);
         MqttClient.publish(domoticz_in_topic, data,Settings.flag.mqtt_switch_retain);
 
@@ -78,8 +81,8 @@ void SwitchStateShow(bool json)
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
       bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SWITCH_STATE, mqtt_data,i +1, GetStateText(swm ^ lastwallswitch[i]));
-
+      //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SWITCH_STATE, mqtt_data,i +1, GetStateText(swm ^ lastwallswitch[i]));
+     WSContentSend_PD(HTTP_SWITCH_STATE,i +1, GetStateText(swm ^ lastwallswitch[i]));
      }
  }
 
@@ -91,9 +94,9 @@ void SwitchStateShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_95
+#define XSNS_95 95
 
-bool Xsns95(uint8_t function)
+bool Xsns95(byte function)
 {
   bool result = false;
 

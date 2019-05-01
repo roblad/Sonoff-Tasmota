@@ -85,7 +85,7 @@ char gastype[11];
 int ppm=0;
 byte counter_measure=0;
 // nask for printf
-const char HTTP_GAS[] PROGMEM = "%s{s}" D_GAS " %s{m} %d" D_UNIT_PARTS_PER_MILLION "{e}";
+const char HTTP_GAS[] PROGMEM = "{s}%s" D_GAS " %s{m} %d " D_UNIT_PARTS_PER_MILLION " {e}";
 const char JSON_SNS_GAS[] PROGMEM = "%s,\"" D_GAS "\":{\"Type\":\"%s\",\"ppm\":%d}";
 
 
@@ -315,8 +315,8 @@ if (counter_measure == 20) {
 
   #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_GAS, mqtt_data,gastype, ppm);
-
+      //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_GAS, mqtt_data,gastype, ppm);
+      WSContentSend_PD(HTTP_GAS,gastype, ppm);
   #endif  // USE_WEBSERVER
     }
 }
@@ -326,9 +326,9 @@ if (counter_measure == 20) {
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_94
+#define XSNS_94 94
 
-bool Xsns94(uint8_t function)
+bool Xsns94(byte function)
 {
   bool result = false;
 

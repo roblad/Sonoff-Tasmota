@@ -48,7 +48,7 @@
 
 
   const char HTTP_SNS_COUNTER_HZ43WB[] PROGMEM =
-    "%s{s}" D_COUNTER "{m}%sm³{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+    "{s}%s" D_COUNTER "{m}%sm³{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #endif  // USE_WEBSERVER
 
@@ -61,7 +61,8 @@ void hz43wb_CounterShow(bool json)
   dtostrf((((float)RtcSettings.pulse_counter[0]/Settings.pulse_devider[0])/DELIMETER),4,3,countingd);
 
   if (json) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"WATER\":{\"CW\":%s}"), mqtt_data,countingd);
+          //snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"WATER\":{\"CW\":%s}"), mqtt_data,countingd);
+          ResponseAppend_P(PSTR(",\"WATER\":{\"CW\":%s}"),countingd);
 
 
 #ifdef USE_DOMOTICZ
@@ -79,7 +80,7 @@ void hz43wb_CounterShow(bool json)
 #ifdef USE_WEBSERVER
       } else {
 
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_COUNTER_HZ43WB, mqtt_data, countingd);
+          WSContentSend_PD(HTTP_SNS_COUNTER_HZ43WB, countingd);
 
 #endif  // USE_WEBSERVER
 

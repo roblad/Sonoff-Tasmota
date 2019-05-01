@@ -39,8 +39,8 @@
 \*********************************************************************************************/
 
 
-
-const char HTTP_SNS_ANALOG2[] PROGMEM = "%s{s} " "Napięcie zasilania" "{m}%sV{e}";                       // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+//WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);
+const char HTTP_SNS_ANALOG2[] PROGMEM = "{s} Napięcie zasilania {m}%s"  D_UNIT_VOLT "{e}";                       // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 
 
@@ -67,8 +67,9 @@ void measureVolt(bool json)
 char volt[6];
 dtostrf(((float)Voltage()/1000),5,3,volt);
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data),PSTR("%s,\"" D_JSON_VCC "\":{\"A0\":%s}"), mqtt_data, volt);
+    //snprintf_P(mqtt_data, sizeof(mqtt_data),PSTR("%s,\"" D_JSON_VCC "\":{\"A0\":%s}"), mqtt_data, volt);
     //PSTR("%s,\"" D_JSON_VCC "\":%d"), mqtt_data, volt);
+    ResponseAppend_P(PSTR(",\"" D_JSON_VCC "\":%s"), volt);
 
     #ifdef USE_DOMOTICZ
             if (0 == tele_period) {
@@ -80,7 +81,9 @@ dtostrf(((float)Voltage()/1000),5,3,volt);
   #ifdef USE_WEBSERVER
   } else {
 
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG2, mqtt_data, volt);
+    //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG2, mqtt_data, volt);
+    //WSContentSend_PD(HTTP_SNS_ANALOG, "Napięcie zasilania", "", volt);
+    WSContentSend_PD(HTTP_SNS_ANALOG2, volt);
   #endif  // USE_WEBSERVER
   }
 }
@@ -90,9 +93,9 @@ dtostrf(((float)Voltage()/1000),5,3,volt);
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_93
+#define XSNS_93 93
 
-bool Xsns93(uint8_t function)
+bool Xsns93(byte function)
 {
   bool result = false;
 

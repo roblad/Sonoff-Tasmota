@@ -81,7 +81,7 @@ bool chirp_detect()
   delay(50);
   Wire.write(TWI_MEASURE_LIGHT);
   yield();
-  delay(2000);
+  //delay(2000);
   status = Wire.endTransmission();
   if (!status) {
     success = true;
@@ -101,12 +101,14 @@ bool chirp_detect()
  * Presentation
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
-  const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%%{e}";
+  const char HTTP_SNS_MOISTURE[] PROGMEM = "{s}%s " D_MOISTURE "{m}%s%%{e}";
 #endif // USE_WEBSERVER
 #ifndef USE_BH1750  // avoid duplicate definition
- const char HTTP_SNS_ILLUMINANCE2[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
+ const char HTTP_SNS_ILLUMINANCE2[] PROGMEM =  "{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
+ //PROGMEM = "{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";     // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
 #endif //USE_BH1750
-const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = "%s,\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
+const char JSON_SNS_LIGHTMOISTTEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_LIGHT "\":%d,\"" D_JSON_MOISTURE "\":%s,\"" D_JSON_TEMPERATURE "\":%s}";
 
 
 void chirp_Get(void) {
@@ -129,7 +131,7 @@ void chirp_Get(void) {
   } else {
   // Report old value. Do not wait for new value.
   yield();
-  delay(2000);
+  delay(1000);
   uint16_t get = I2cRead16(chirpaddr, TWI_GET_LIGHT);
   light = (map(((get) > 58000  ? CHIRP_LIGHT_CALIB : get),CHIRP_LIGHT_CALIB,0,0,100));
   }
@@ -146,8 +148,8 @@ void chirp_Show(bool json)
   if (test) {
 
      if (json) {
-       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_LIGHTMOISTTEMP, mqtt_data, chirpstype, light, moisture,temperature);
-
+       //snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_LIGHTMOISTTEMP, mqtt_data, chirpstype, light, moisture,temperature);
+       ResponseAppend_P(JSON_SNS_LIGHTMOISTTEMP, chirpstype, light, moisture,temperature);
 
       #ifdef USE_DOMOTICZ
       if (0 == tele_period ){
@@ -164,9 +166,12 @@ void chirp_Show(bool json)
      } else {
 
 
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE2, mqtt_data, chirpstype, light);
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, chirpstype, moisture);
-       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
+       //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE2, mqtt_data, chirpstype, light);
+       WSContentSend_PD(HTTP_SNS_ILLUMINANCE2,chirpstype, light);
+       //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MOISTURE, mqtt_data, chirpstype, moisture);
+       WSContentSend_PD(HTTP_SNS_MOISTURE, chirpstype, moisture);
+       //snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, chirpstype, temperature, TempUnit());
+       WSContentSend_PD(HTTP_SNS_TEMP, chirpstype, temperature, TempUnit());
   #endif // USE_WEBSERVER
      }
   }
@@ -177,9 +182,9 @@ void chirp_Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_92
+#define XSNS_92 92
 
-bool Xsns92(uint8_t function)
+bool Xsns92(byte function)
 {
   bool result = false;
 

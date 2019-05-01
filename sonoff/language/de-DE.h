@@ -435,6 +435,7 @@
 #define D_SENSOR_DS18X20  "DS18x20"
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
+#define D_SENSOR_DEEPSLEEP     "DSSw"
 #define D_SENSOR_WS2812   "WS2812"
 #define D_SENSOR_IRSEND   "IRSend"
 #define D_SENSOR_SWITCH   "Switch "   // Suffix "1"

@@ -97,8 +97,6 @@ enum UserSelectablePins {
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
-  GPIO_NBR_TX,         // Node Bridge Serial interface
-  GPIO_NBR_RX,         // Node Bridge Serial interface
   GPIO_SR04_TRIG,      // SR04 Trigger pin
   GPIO_SR04_ECHO,      // SR04 Echo pin
   GPIO_SDM120_TX,      // SDM120 Serial interface
@@ -220,9 +218,6 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SPI_CS "|" D_SENSOR_SPI_DC "|" D_SENSOR_BACKLIGHT "|"
   D_SENSOR_PMS5003 "|" D_SENSOR_SDS0X1_RX "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
-//stb mod
-//  D_SENSOR_NBR_TX "|" D_SENSOR_NBR_RX "|"
-//stb mod
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
@@ -466,6 +461,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_I2C
   GPIO_I2C_SCL,        // I2C SCL
   GPIO_I2C_SDA,        // I2C SDA
+  // stb model
+
+  //end
 #endif
 #ifdef USE_SPI
   GPIO_SPI_CS,         // SPI Chip Select
@@ -607,7 +605,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
   GPIO_HRE_DATA
-#endif
+#endif  
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {

@@ -406,7 +406,7 @@ void SDM630Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns97(uint8_t function)
+bool Xsns97(byte function)
 {
   bool result = false;
 

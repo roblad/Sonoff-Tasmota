@@ -142,9 +142,9 @@ if (json) {
 \*********************************************************************************************/
 
 
-#define XSNS_96
+#define XSNS_96 96
 
-bool Xsns96(uint8_t function)
+bool Xsns96(byte function)
 {
   bool result = false;
 
