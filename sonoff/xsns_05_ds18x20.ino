@@ -421,6 +421,11 @@ void Ds18x20EverySecond(void)
 
 void Ds18x20Show(bool json)
 {
+
+//STB mod
+char data[70];
+//end
+
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
 
@@ -441,8 +446,17 @@ void Ds18x20Show(bool json)
           ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, address, temperature);
         }
 #ifdef USE_DOMOTICZ
-        if ((0 == tele_period) && (0 == i)) {
-          DomoticzSensor(DZ_TEMP, temperature);
+//STB mod
+        if ((0 == tele_period)) {
+         if (0 == i) {
+            DomoticzSensor(DZ_TEMP, temperature);
+         } else {
+
+            snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,int (Settings.domoticz_sensor_idx[DZ_TEMP]) + i, 0,temperature, DomoticzBatteryQuality(), DomoticzRssiQuality());
+            MqttClient.publish(domoticz_in_topic, data,0);
+            delayMicroseconds(500);
+         }
+//end
         }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX

@@ -60,7 +60,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_PULSETIMERS        8            // Max number of supported pulse timers
 #define MAX_FRIENDLYNAMES      4            // Max number of Friendly names
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
-#define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
+#define MAX_DOMOTICZ_SNS_IDX   14           // Max number of Domoticz sensors indices
 #define MAX_KNX_GA             10           // Max number of KNX Group Addresses to read that can be set
 #define MAX_KNX_CB             10           // Max number of KNX Group Addresses to write that can be set
 #define MAX_XNRG_DRIVERS       32           // Max number of allowed energy drivers

@@ -39,7 +39,7 @@
 
 const char HTTP_NODE2_SNS[] PROGMEM =
 
-  "{s}%s" D_UPDATED "{m} %s{e}"
+  "{s}" D_UPDATED "{m} %s{e}"
   "{s}" D_VOLTAGE_NODE "{m} %s" D_UNIT_VOLT "{e}"
   "{s}" D_GAS "{m} %s" D_UNIT_GAS "{e}";
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -99,7 +99,9 @@ if (json) {
 
     if( flag==2 && flag2 == 1) {
 
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%s"),mqtt_data, mqtt_buff);
+        //snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%s"),mqtt_data, mqtt_buff);
+        //,"Node":{
+        ResponseAppend_P(PSTR(",%s"), mqtt_buff);
         mqtt_buff[0]='\0';
         //Serial.flush();
 #ifdef USE_DOMOTICZ
@@ -121,10 +123,7 @@ if (json) {
   //no2=2;
   if (no2==2 && nodegas[0] != '\0'){
     //&& nodegas[0] != '\0'
-  WSContentSend_PD(HTTP_NODE2_SNS,mqtt_data,
-  Time2,
-  volt2,
-  nodegas);
+  WSContentSend_PD(HTTP_NODE2_SNS,Time2, volt2,nodegas);
   }
 
 

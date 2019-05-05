@@ -270,7 +270,7 @@ void SDM630Init(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_SDM630_DATA[] PROGMEM =
   "{s}SDM630 " D_VOLTAGE "{m}%s/%s/%s " D_UNIT_VOLT "{e}"
   "{s}SDM630 " D_THDLTN "{m}%s %% {e}"
   "{s}SDM630 " D_CURRENT "{m}%s/%s/%s " D_UNIT_AMPERE "{e}"
@@ -320,7 +320,7 @@ void SDM630Show(bool json)
   dtostrfd(sdm630_power_thdltn, 1, voltage_thdltn);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\""
+    ResponseAppend_P(PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\""
       D_JSON_ACTIVE_POWERUSAGE "\":[%s,%s,%s],\"" D_JSON_REACTIVE_POWERUSAGE "\":[%s,%s,%s],\""
       D_JSON_POWERFACTOR "\":[%s,%s,%s],\"" D_JSON_VOLTAGE "\":[%s,%s,%s],\"" D_JSON_THDLTN "\":%s,\"" D_JSON_CURRENT "\":[%s,%s,%s]}"),
       mqtt_data, energy_total, active_power_l1, active_power_l2, active_power_l3,
@@ -333,58 +333,82 @@ void SDM630Show(bool json)
 #ifdef USE_DOMOTICZ
 
     if (0 == tele_period) {
+      char data[70];
       int batq = DomoticzBatteryQuality();
       int rssi = DomoticzRssiQuality();
       for (byte i = 0; i < 3; i++) {
-
+      //Settings.flag.mqtt_sensor_retain
       switch (i) {
         case 0:
         //{"idx":626,"nvalue":0,"svalue":"732741","Battery":200,"RSSI":10}
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_VOLTAGE_IDX, 0, voltage_l1, batq, rssi);
-          MqttPublish(domoticz_in_topic);
-          delayMicroseconds(5000);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_CURRENT_IDX, 0, current_l1, batq, rssi);
-          MqttPublish(domoticz_in_topic);
-          delayMicroseconds(5000);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_POWER_IDX, 0, active_power_l1, batq, rssi);
-          MqttPublish(domoticz_in_topic);
-          delayMicroseconds(5000);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,DZ_FACTOR_IDX, 0, power_factor_l1, batq, rssi);
-          MqttPublish(domoticz_in_topic);
-          delayMicroseconds(5000);
+          snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,         DZ_VOLTAGE_IDX, 0, voltage_l1, batq, rssi);
+
+
+          //Response_P( DOMOTICZ_MESSAGE,DZ_VOLTAGE_IDX, 0, voltage_l1, batq, rssi);
+          //MqttPublish(domoticz_in_topic);
+          MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+          delayMicroseconds(500);
+          snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,         DZ_CURRENT_IDX, 0, current_l1, batq, rssi);
+          //Response_P(DOMOTICZ_MESSAGE,DZ_CURRENT_IDX, 0, current_l1, batq, rssi);
+          //MqttPublish(domoticz_in_topic);
+          MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+          delayMicroseconds(500);
+          snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,         DZ_POWER_IDX, 0, active_power_l1, batq, rssi);
+          //Response_P(DOMOTICZ_MESSAGE,DZ_POWER_IDX, 0, active_power_l1,batq, rssi);
+          //MqttPublish(domoticz_in_topic);
+          MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+          delayMicroseconds(500);
+          snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,DZ_FACTOR_IDX, 0, power_factor_l1, batq, rssi);
+          //Response_P(DOMOTICZ_MESSAGE,DZ_FACTOR_IDX, 0, power_factor_l1, batq, rssi);
+          //MqttPublish(domoticz_in_topic);
+          MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+          delayMicroseconds(500);
         break;
         case 1:
         //{"idx":626,"nvalue":0,"svalue":"732741","Battery":200,"RSSI":10}
-         snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-         DZ_VOLTAGE_IDX+1, 0, voltage_l2, batq, rssi);
-         MqttPublish(domoticz_in_topic);
-         delayMicroseconds(5000);
-         snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-         DZ_CURRENT_IDX+1, 0, current_l2, batq, rssi);
-         MqttPublish(domoticz_in_topic);
-         delayMicroseconds(5000);
-         snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-         DZ_POWER_IDX+1, 0, active_power_l2, batq, rssi);
-         MqttPublish(domoticz_in_topic);
-         delayMicroseconds(5000);
-         snprintf_P(mqtt_data,sizeof(mqtt_data),DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+1,0, power_factor_l2, batq, rssi);
-         MqttPublish(domoticz_in_topic);
-         delayMicroseconds(5000);
+         snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,         DZ_VOLTAGE_IDX+1, 0, voltage_l2, batq, rssi);
+         //Response_P(DOMOTICZ_MESSAGE,DZ_VOLTAGE_IDX+1, 0, voltage_l2, batq, rssi);
+         //MqttPublish(domoticz_in_topic);
+         MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+         delayMicroseconds(500);
+         snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,DZ_CURRENT_IDX+1, 0, current_l2, batq, rssi);
+         //Response_P(DOMOTICZ_MESSAGE,DZ_CURRENT_IDX+1, 0, current_l2, batq, rssi);
+         //MqttPublish(domoticz_in_topic);
+         MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+         delayMicroseconds(500);
+         snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,DZ_POWER_IDX+1, 0, active_power_l2, batq, rssi);
+         //Response_P(DOMOTICZ_MESSAGE,DZ_POWER_IDX+1, 0, active_power_l2, batq, rssi);
+         //MqttPublish(domoticz_in_topic);
+         MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+         delayMicroseconds(500);
+         snprintf_P(data,sizeof(data),DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+1,0, power_factor_l2, batq, rssi);
+         //Response_P(DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+1,0, power_factor_l2, batq, rssi);
+         //MqttPublish(domoticz_in_topic);
+         MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+         delayMicroseconds(500);
         break;
         case 2:
         //{"idx":626,"nvalue":0,"svalue":"732741","Battery":200,"RSSI":10}
-           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,         DZ_VOLTAGE_IDX+2, 0, voltage_l3, batq, rssi);
-           MqttPublish(domoticz_in_topic);
-           delayMicroseconds(5000);
-           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,        DZ_CURRENT_IDX+2, 0, current_l3, batq, rssi);
-           MqttPublish(domoticz_in_topic);
-           delayMicroseconds(5000);
-           snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,DZ_POWER_IDX+2, 0, active_power_l3, batq, rssi);
-           MqttPublish(domoticz_in_topic);
-           delayMicroseconds(5000);
-           snprintf_P(mqtt_data, sizeof(mqtt_data),    DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+2, 0, power_factor_l3, batq, rssi);
-           MqttPublish(domoticz_in_topic);
-           delayMicroseconds(5000);
+           snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,         DZ_VOLTAGE_IDX+2, 0, voltage_l3, batq, rssi);
+           //Response_P(DOMOTICZ_MESSAGE,DZ_VOLTAGE_IDX+2, 0, voltage_l3, batq, rssi);
+           //MqttPublish(domoticz_in_topic);
+           MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+           delayMicroseconds(500);
+           snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,        DZ_CURRENT_IDX+2, 0, current_l3, batq, rssi);
+           //Response_P(DOMOTICZ_MESSAGE,DZ_CURRENT_IDX+2, 0, current_l3, batq, rssi);
+           //MqttPublish(domoticz_in_topic);
+           MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+           delayMicroseconds(500);
+           snprintf_P(data, sizeof(data), DOMOTICZ_MESSAGE,DZ_POWER_IDX+2, 0, active_power_l3, batq, rssi);
+           //Response_P(DOMOTICZ_MESSAGE,DZ_POWER_IDX+2, 0, active_power_l3, batq, rssi);
+           //MqttPublish(domoticz_in_topic);
+           MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+           delayMicroseconds(500);
+           snprintf_P(data, sizeof(data),    DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+2, 0, power_factor_l3, batq, rssi);
+           //sResponse_P(DOMOTICZ_MESSAGE,DZ_FACTOR_IDX+2, 0, power_factor_l3, batq, rssi);
+           //MqttPublish(domoticz_in_topic);
+           MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+           delayMicroseconds(500);
         break;
        }
 
@@ -394,7 +418,7 @@ void SDM630Show(bool json)
 #endif  // USE_DOMOTICZ
 
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM630_DATA, mqtt_data,
+    WSContentSend_PD(HTTP_SNS_SDM630_DATA,
     voltage_l1, voltage_l2, voltage_l3, voltage_thdltn, current_l1, current_l2, current_l3, active_power_l1, active_power_l2, active_power_l3,
     reactive_power_l1, reactive_power_l2, reactive_power_l3,
     power_factor_l1, power_factor_l2, power_factor_l3, energy_total);

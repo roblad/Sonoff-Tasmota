@@ -85,7 +85,7 @@ char gastype[11];
 int ppm=0;
 byte counter_measure=0;
 // nask for printf
-const char HTTP_GAS[] PROGMEM = "{s}%s" D_GAS " %s{m} %d " D_UNIT_PARTS_PER_MILLION " {e}";
+const char HTTP_GAS[] PROGMEM = "{s}" D_GAS " %s{m} %d " D_UNIT_PARTS_PER_MILLION " {e}";
 const char JSON_SNS_GAS[] PROGMEM = ",\"" D_GAS "\":{\"Type\":\"%s\",\"ppm\":%d}";
 
 

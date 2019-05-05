@@ -58,7 +58,7 @@ uint16_t chirp_readLux(void)
   uint8_t counter = 0;
   I2cWrite(chirpaddr, TWI_MEASURE_LIGHT, 1, 0);
   while (I2cRead8(chirpaddr, TWI_GET_BUSY) && counter < 50) {
-    yield();
+    //yield();
     delay(100);
     counter++;
   }
@@ -130,7 +130,7 @@ void chirp_Get(void) {
 
   } else {
   // Report old value. Do not wait for new value.
-  yield();
+  //yield();
   delay(100);
   uint16_t get = I2cRead16(chirpaddr, TWI_GET_LIGHT);
   light = (map(((get) > 58000  ? CHIRP_LIGHT_CALIB : get),CHIRP_LIGHT_CALIB,0,0,100));
