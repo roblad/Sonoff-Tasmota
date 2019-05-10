@@ -67,14 +67,19 @@ void hz43wb_CounterShow(bool json)
 
 #ifdef USE_DOMOTICZ
         if (0 == tele_period) {
-
-            char data[70];
-            int idx=IDX_FLAG;
-            snprintf_P(data, sizeof(data), PSTR("{\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}"),IDX_FLAG,countingd, DomoticzBatteryQuality(),DomoticzRssiQuality());
+/*          char data[100];
+          memcpy(data, mqtt_data, sizeof(data));
+          Response_P(DOMOTICZ_MESSAGE,IDX_FLAG,countingd, DomoticzBatteryQuality(),DomoticzRssiQuality());
+          MqttPublish(domoticz_in_topic);
+          memcpy(mqtt_data, data, sizeof(data));
+          delayMicroseconds(500);*/
+          char data[70];
+            //int idx=IDX_FLAG;
+          snprintf_P(data, sizeof(data), PSTR("{\"idx\":%d,\"nvalue\":0,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}"),IDX_FLAG,countingd, DomoticzBatteryQuality(),DomoticzRssiQuality());
 
             //Response_P(PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),IDX_FLAG,countingd, DomoticzBatteryQuality(), DomoticzRssiQuality());
             //  {"idx":IDX_FLAG,"nvalue":688,"Battery":200,"RSSI":10}
-            MqttClient.publish(domoticz_in_topic, data, Settings.flag.mqtt_sensor_retain);
+          MqttClient.publish(domoticz_in_topic, data, 0);
             //MqttPublish(domoticz_in_topic);
 
         }

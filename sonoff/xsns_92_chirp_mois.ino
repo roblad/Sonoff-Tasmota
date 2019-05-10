@@ -73,6 +73,7 @@ bool chirp_detect()
   if (chirptype) {
     return true;
   }
+  //Wire.setClockStretchLimit(4000);
   uint8_t status;
   bool success = false;
   chirpaddr = CHIRP_ADDR1;

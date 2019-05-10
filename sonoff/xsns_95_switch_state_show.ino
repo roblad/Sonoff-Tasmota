@@ -61,13 +61,20 @@ void SwitchStateShow(bool json)
 
     if (0 == tele_period ){
         if (Settings.domoticz_switch_idx[i] > 0) {
-        char data[55];
-        snprintf_P(data,sizeof(data),PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),Settings.domoticz_switch_idx[0+i],test);
+
+          char data[55];
+          memcpy(data, mqtt_data, sizeof(data));
+          Response_P(PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}") ,Settings.domoticz_switch_idx[0+i],test);
+          MqttPublish(domoticz_in_topic);
+          memcpy(mqtt_data, data, sizeof(data));
+          delayMicroseconds(500);
+        //char data[55];
+        //snprintf_P(data,sizeof(data),PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),Settings.domoticz_switch_idx[0+i],test);
 
         //Response_P(PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),Settings.domoticz_switch_idx[0+i],test);
 
         //MqttPublish(domoticz_in_topic);
-        MqttClient.publish(domoticz_in_topic, data,Settings.flag.mqtt_switch_retain);
+      //  MqttClient.publish(domoticz_in_topic, data,Settings.flag.mqtt_switch_retain);
         //MqttClient.publish(domoticz_in_topic,data, 1);
         //char dmess2[100];
         //MqttClient.publish(domoticz_in_topic, mqtt_data, 1);
